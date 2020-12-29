@@ -1,0 +1,30 @@
+#pragma version 2
+int 0
+byte "OptedAppId"
+app_local_del
+int 0
+byte "OptedAppAddr"
+app_local_del
+int 0
+byte "AdvertiserUrl"
+app_local_del
+byte "Category1"
+app_global_del
+byte "Category2"
+app_global_del
+byte "Category3"
+app_global_del
+byte "Category4"
+app_global_del
+byte "Category5"
+app_global_del
+byte "Category6"
+app_global_del
+byte "Category7"
+app_global_del
+byte "Category8"
+app_global_del
+byte "NextApp"
+app_global_del
+int 1
+return
