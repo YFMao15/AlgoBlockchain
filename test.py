@@ -40,7 +40,7 @@ if __name__ == "__main__":
     adv3 = Advertiser(
         API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC",
         advertiser_address = "https://testnet-algorand.api.purestake.io/ps2",
-        passphrase = "meadow glare silk life negliect inject figure claw purity burden decide wondercry clerk width case theme screen donor vault rice weasel host able peanut")
+        passphrase = "meadow glare silk life neglect inject figure claw purity burden decide wonder cry clerk width case theme screen donor vault rice weasel host able peanut")
     adv3.login()
 
     adv4 = Advertiser(
@@ -52,10 +52,8 @@ if __name__ == "__main__":
     contract_client = Contract(
         API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC",
         contract_address = "https://testnet-algorand.api.purestake.io/ps2",
-        passphrase = "cool online brush identify bean nuclear elder soft fashion mind inside drama camp excess captain window spare oxygen tonight kingdom sustain pigeon predict ability rail")
-
+        passphrase = "account impact timber wall weapon coil flat alert park sting west easy alter amateur lucky rose enhance mass script brain crop hint unusual abstract job")
     contract_client.read_head_app_id()
-
     contract_client.create_code()
     contract_client.compile_code()
 
