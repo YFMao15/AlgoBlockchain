@@ -13,8 +13,6 @@ class Contract():
         self.API_key = API_key
         self.contract_address = contract_address
         self.passphrase = passphrase
-        self.contract_client = None
-        self.indexer_client = None
         self.app_id = None
         self.head_app_id = None
         self.categories = [
@@ -25,7 +23,11 @@ class Contract():
             "Category5",
             "Category6",
             "Category7",
-            "Category8"
+            "Category8",
+            "Category9",
+            "Category10",
+            "Category11",
+            "Category12"
         ]
 
         self.TEAL_approve_condition = None
@@ -34,34 +36,54 @@ class Contract():
         self.TEAL_clear_code = None
         self.TEAL_approve_program = None
         self.TEAL_clear_program = None
-   
-    # local state url, app_id
-    # global state category : appended urls
+
+        purestake_token = {'X-API-key': self.API_key}
+        self.contract_client = algod.AlgodClient(
+            self.API_key, 
+            self.contract_address, 
+            headers=purestake_token)
+        self.indexer_client = indexer.IndexerClient(
+            self.API_key, 
+            self.contract_address, 
+            headers=purestake_token)
+
     def create_code(self):
         create = Seq([
             App.globalPut(Bytes("Creator"), Txn.sender()),
-            App.globalPut(Bytes("NextApp"), Txn.application_args[1]),
+            App.globalPut(Bytes("NextApp"), Bytes("None")),
+            App.globalPut(Bytes("Category1"), Bytes("None")),
+            App.globalPut(Bytes("Category2"), Bytes("None")),
+            App.globalPut(Bytes("Category3"), Bytes("None")),
+            App.globalPut(Bytes("Category4"), Bytes("None")),
+            App.globalPut(Bytes("Category5"), Bytes("None")),
+            App.globalPut(Bytes("Category6"), Bytes("None")),
+            App.globalPut(Bytes("Category7"), Bytes("None")),
+            App.globalPut(Bytes("Category8"), Bytes("None")),
+            App.globalPut(Bytes("Category9"), Bytes("None")),
+            App.globalPut(Bytes("Category10"), Bytes("None")),
+            App.globalPut(Bytes("Category11"), Bytes("None")),
+            App.globalPut(Bytes("Category12"), Bytes("None")),
             Return(Int(1))
         ])
 
-        # one advertiser taking one app
         opt_in = Seq([
-            # record the id and the address of the smart contract locally
-            App.localPut(Int(0), Bytes("OptedAppId"), App.id()),
-            App.localPut(Int(0), Bytes("OptedAppAddr"), Txn.receiver()),
-            App.localPut(Int(0), Bytes("AdvertiserUrl"), Txn.application_args[1]),
-            App.globalPut(Bytes("Category1"), Txn.application_args[2]),
-            App.globalPut(Bytes("Category2"), Txn.application_args[3]),
-            App.globalPut(Bytes("Category3"), Txn.application_args[4]),
-            App.globalPut(Bytes("Category4"), Txn.application_args[5]),
-            App.globalPut(Bytes("Category5"), Txn.application_args[6]),
-            App.globalPut(Bytes("Category6"), Txn.application_args[7]),
-            App.globalPut(Bytes("Category7"), Txn.application_args[8]),
-            App.globalPut(Bytes("Category8"), Txn.application_args[9]),
             Return(Int(1))
         ])
 
         # for advertiser
+        write = Seq([
+            App.globalPut(Txn.application_args[1], Txn.application_args[2]),
+            If(
+                App.optedIn(Int(0), App.id()),
+                Seq([
+                    App.localPut(Int(0), Bytes("OptedAppId"), App.id()),
+                    App.localPut(Int(0), Bytes("AdvertiserUrl"), Txn.application_args[3]),
+                ]),
+                Return(Int(0))
+            ),
+            Return(Int(1))
+        ])
+
         chain = Seq([
             App.globalPut(Bytes("NextApp"), Txn.application_args[1]),
             Return(Int(1))
@@ -71,15 +93,7 @@ class Contract():
             App.localDel(Int(0), Bytes("OptedAppId")),
             App.localDel(Int(0), Bytes("OptedAppAddr")),
             App.localDel(Int(0), Bytes("AdvertiserUrl")),
-            App.globalDel(Bytes("Category1")),
-            App.globalDel(Bytes("Category2")),
-            App.globalDel(Bytes("Category3")),
-            App.globalDel(Bytes("Category4")),
-            App.globalDel(Bytes("Category5")),
-            App.globalDel(Bytes("Category6")),
-            App.globalDel(Bytes("Category7")),
-            App.globalDel(Bytes("Category8")),
-            App.globalDel(Bytes("NextApp")),
+            App.globalPut(Txn.application_args[1], Bytes("None")),
             Return(Int(1))
         ])
 
@@ -92,7 +106,8 @@ class Contract():
             [Txn.on_completion() == OnComplete.OptIn, opt_in],
             [Txn.on_completion() == OnComplete.CloseOut, close_out],
             [Txn.on_completion() == OnComplete.NoOp, Cond(
-                [Txn.application_args[0] == Bytes("Chain"), chain]
+                [Txn.application_args[0] == Bytes("Chain"), chain],
+                [Txn.application_args[0] == Bytes("Write"), write]
             )]
         )
         self.TEAL_approve_condition = program
@@ -102,15 +117,7 @@ class Contract():
             App.localDel(Int(0), Bytes("OptedAppId")),
             App.localDel(Int(0), Bytes("OptedAppAddr")),
             App.localDel(Int(0), Bytes("AdvertiserUrl")),
-            App.globalDel(Bytes("Category1")),
-            App.globalDel(Bytes("Category2")),
-            App.globalDel(Bytes("Category3")),
-            App.globalDel(Bytes("Category4")),
-            App.globalDel(Bytes("Category5")),
-            App.globalDel(Bytes("Category6")),
-            App.globalDel(Bytes("Category7")),
-            App.globalDel(Bytes("Category8")),
-            App.globalDel(Bytes("NextApp")),
+            App.globalPut(Txn.application_args[1], Bytes("None")),
             Return(Int(1))
         ])
         program = clear_state
@@ -165,17 +172,31 @@ class Contract():
         with open(os.path.join(os.path.dirname(__file__), str(mnemonic.to_public_key(self.passphrase))+".txt"), 'w') as fp:
             fp.write(str(self.head_app_id))
 
-    def create_contract_app(self):
-        purestake_token = {'X-API-key': self.API_key}
-        self.contract_client = algod.AlgodClient(
-            self.API_key, 
-            self.contract_address, 
-            headers=purestake_token)
-        self.indexer_client = indexer.IndexerClient(
-            self.API_key, 
-            self.contract_address, 
-            headers=purestake_token)
+    def search_blank(self, category_input):
+        self.read_head_app_id()
+        print("Searching blank area for category " + str(category_input))
+        if self.head_app_id != "None":
+            prev_app_id = self.head_app_id + ""
+            next_app_id = prev_app_id + ""
+            while next_app_id != "None":
+                prev_app_id = next_app_id + ""
+                app = self.indexer_client.applications(int(prev_app_id))
+                if 'application' in app:
+                    global_states = app['application']['params']['global-state']
+                else:
+                    global_states = app['params']['global-state']
+                for state in global_states:
+                    if base64.b64decode(state['key']) == b'NextApp':
+                        next_app_id = base64.b64decode(state['value']['bytes']).decode('utf-8')
+                    if base64.b64decode(state['key']) == bytes(category_input, 'utf-8'):
+                        if base64.b64decode(state['value']['bytes']).decode('utf-8') == "None":
+                            
+                            return int(prev_app_id)
+            return None
+        else:
+            return None
 
+    def create_contract_app(self):
         # compile the code into client
         self.TEAL_approve_program = base64.b64decode(self.contract_client.compile(self.TEAL_approve_code)['result'])
         self.TEAL_clear_program = base64.b64decode(self.contract_client.compile(self.TEAL_clear_code)['result'])
@@ -190,7 +211,6 @@ class Contract():
         local_schema = transaction.StateSchema(6, 6)
         app_args = [
             b'Create',
-            b'None'
         ]
 
         # create / sign / verify transaction
@@ -213,16 +233,9 @@ class Contract():
         params = self.contract_client.suggested_params()
         params.flat_fee = True
         params.fee = 0.1
-        categories = []
-        for x in range(len(self.categories)):
-            if opt_in_advertiser.category != self.categories[x]:
-                categories.append(b"None")
-            else:
-                categories.append(bytes(opt_in_advertiser.account_public_key, 'utf-8'))
         app_args = [
             b'Opt-in',
-            # this should be the url of account, here we use pub key for testing
-            bytes(opt_in_advertiser.account_public_key, 'utf-8')] + categories
+        ]
 
         txn = transaction.ApplicationOptInTxn(opt_in_advertiser.account_public_key, params, self.app_id, app_args=app_args)
         signed_txn = txn.sign(opt_in_advertiser.account_private_key)
@@ -233,7 +246,46 @@ class Contract():
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
         print("OptIn to app-id:", transaction_response['txn']['txn']['apid'])
             
-    def chain_app(self, chaining_advertiser):
+    def write_app(self, writing_advertiser):
+        prev_app_id = self.head_app_id
+        next_app_id = prev_app_id + ""
+        while next_app_id != "None":
+            prev_app_id = next_app_id + ""
+            app = self.indexer_client.applications(int(prev_app_id))
+            if 'application' in app:
+                global_states = app['application']['params']['global-state']
+            else:
+                global_states = app['params']['global-state']
+            for state in global_states:
+                if base64.b64decode(state['key']) == b'NextApp':
+                    next_app_id = base64.b64decode(state['value']['bytes']).decode('utf-8')
+                if base64.b64decode(state['key']) == bytes(writing_advertiser.category, 'utf-8'):
+                    app_category_content = base64.b64decode(state['value']['bytes']).decode('utf-8')
+                    if app_category_content == "None":
+                        next_app_id = "None"
+                        break
+
+        print("Write advertiser info from account:", writing_advertiser.account_public_key)
+        params = self.contract_client.suggested_params()
+        params.flat_fee = True
+        params.fee = 0.1
+        app_args = [
+            b'Write',
+            bytes(str(writing_advertiser.category), 'utf-8'),
+            bytes(str(writing_advertiser.account_public_key), 'utf-8'),
+            bytes("Url: " + str(writing_advertiser.account_public_key), 'utf-8'),
+        ]
+
+        txn = transaction.ApplicationNoOpTxn(writing_advertiser.account_public_key, params, int(prev_app_id), app_args=app_args)
+        signed_txn = txn.sign(writing_advertiser.account_private_key)
+        tx_id = signed_txn.transaction.get_txid()
+        self.contract_client.send_transactions([signed_txn])
+        self.wait_for_confirmation(tx_id)
+
+        transaction_response = self.contract_client.pending_transaction_info(tx_id)
+        print("Write to app-id:",transaction_response['txn']['txn']['apid'])
+
+    def chain_app(self, chaining_advertiser, app_id):
         prev_app_id = self.head_app_id
         if prev_app_id == "None":
             self.head_app_id = str(self.app_id)
@@ -268,13 +320,28 @@ class Contract():
             transaction_response = self.contract_client.pending_transaction_info(tx_id)
             print("Chain to app-id:",transaction_response['txn']['txn']['apid'])
 
+    def add_adv_into_app(self, advertiser):
+        self.read_head_app_id()
+        result = self.search_blank(advertiser.category)
+        # self.app_id -> opt-in, write, close_out, delete 
+        if result == None:
+            self.create_contract_app()
+            self.chain_app(advertiser, self.app_id)
+            self.opt_in_app(advertiser)
+            self.write_app(advertiser)
+        else:
+            self.app_id = result
+            self.opt_in_app(advertiser)
+            self.write_app(advertiser)
+
     def close_out_app(self, close_out_advertiser):
         print("Close out app from account:", close_out_advertiser.account_public_key)
         params = self.contract_client.suggested_params()
         params.flat_fee = True
         params.fee = 0.1
         app_args = [
-            b'Close_Out'
+            b'Close_Out',
+            bytes(close_out_advertiser.category, 'utf-8'),
         ]
             
         txn = transaction.ApplicationCloseOutTxn(close_out_advertiser.account_public_key, params, self.app_id, app_args=app_args)
@@ -293,6 +360,7 @@ class Contract():
         params.fee = 0.1
         app_args = [
             b'Clear',
+            bytes(clear_advertiser.category, 'utf-8'),
         ]
 
         txn = transaction.ApplicationClearStateTxn(clear_advertiser.account_public_key, params, self.app_id, app_args=app_args)
@@ -310,7 +378,7 @@ class Contract():
         params.flat_fee = True
         params.fee = 0.1
         app_args = [
-            b'Delete'
+            b'Delete',
         ]
 
         txn = transaction.ApplicationDeleteTxn(creator, params, self.app_id, app_args=app_args)
@@ -324,7 +392,7 @@ class Contract():
         # clear all info
         self.app_id = None
 
-    def search_category(self, category_input):
+    def external_search(self, category_input):
         self.read_head_app_id()
         results = []
         print("Searching for category " + str(category_input))
@@ -344,13 +412,26 @@ class Contract():
                     if base64.b64decode(state['key']) == bytes(category_input, 'utf-8'):
                         if base64.b64decode(state['value']['bytes']).decode('utf-8') != "None":
                             results.append(base64.b64decode(state['value']['bytes']).decode('utf-8'))
+                            local_vars = self.contract_client.account_info(base64.b64decode(state['value']['bytes']).decode('utf-8'))['apps-local-state']
+                            for local_var in local_vars:
+                                if local_var['id'] == int(prev_app_id):
+                                    for x in local_var['key-value']:
+                                        key = base64.b64decode(x['key']).decode('utf-8')
+                                        value = x['value']
+                                        if len(value['bytes']) == 0:
+                                            results.append({key: value['uint']})
+                                        else:
+                                            results.append({key:  base64.b64decode(value['bytes']).decode('utf-8')})
+                                    break
+                            
+            
+            
             print("The searching results of category " + category_input + " are:")
             for x in results:
                 print(x)
         else:
             print("Head app is not existed!")
-
-
+    
 if __name__ == "__main__":
     contract_client = Contract(
         API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC",

@@ -25,7 +25,43 @@ byte "Creator"
 txn Sender
 app_global_put
 byte "NextApp"
-txna ApplicationArgs 1
+byte "None"
+app_global_put
+byte "Category1"
+byte "None"
+app_global_put
+byte "Category2"
+byte "None"
+app_global_put
+byte "Category3"
+byte "None"
+app_global_put
+byte "Category4"
+byte "None"
+app_global_put
+byte "Category5"
+byte "None"
+app_global_put
+byte "Category6"
+byte "None"
+app_global_put
+byte "Category7"
+byte "None"
+app_global_put
+byte "Category8"
+byte "None"
+app_global_put
+byte "Category9"
+byte "None"
+app_global_put
+byte "Category10"
+byte "None"
+app_global_put
+byte "Category11"
+byte "None"
+app_global_put
+byte "Category12"
+byte "None"
 app_global_put
 int 1
 return
@@ -38,42 +74,6 @@ app_global_get
 return
 b l5
 l2:
-int 0
-byte "OptedAppId"
-global CurrentApplicationID
-app_local_put
-int 0
-byte "OptedAppAddr"
-txn Receiver
-app_local_put
-int 0
-byte "AdvertiserUrl"
-txna ApplicationArgs 1
-app_local_put
-byte "Category1"
-txna ApplicationArgs 2
-app_global_put
-byte "Category2"
-txna ApplicationArgs 3
-app_global_put
-byte "Category3"
-txna ApplicationArgs 4
-app_global_put
-byte "Category4"
-txna ApplicationArgs 5
-app_global_put
-byte "Category5"
-txna ApplicationArgs 6
-app_global_put
-byte "Category6"
-txna ApplicationArgs 7
-app_global_put
-byte "Category7"
-txna ApplicationArgs 8
-app_global_put
-byte "Category8"
-txna ApplicationArgs 9
-app_global_put
 int 1
 return
 b l5
@@ -87,24 +87,9 @@ app_local_del
 int 0
 byte "AdvertiserUrl"
 app_local_del
-byte "Category1"
-app_global_del
-byte "Category2"
-app_global_del
-byte "Category3"
-app_global_del
-byte "Category4"
-app_global_del
-byte "Category5"
-app_global_del
-byte "Category6"
-app_global_del
-byte "Category7"
-app_global_del
-byte "Category8"
-app_global_del
-byte "NextApp"
-app_global_del
+txna ApplicationArgs 1
+byte "None"
+app_global_put
 int 1
 return
 b l5
@@ -113,6 +98,10 @@ txna ApplicationArgs 0
 byte "Chain"
 ==
 bnz l6
+txna ApplicationArgs 0
+byte "Write"
+==
+bnz l7
 err
 l6:
 byte "NextApp"
@@ -120,5 +109,29 @@ txna ApplicationArgs 1
 app_global_put
 int 1
 return
+b l8
 l7:
+txna ApplicationArgs 1
+txna ApplicationArgs 2
+app_global_put
+int 0
+global CurrentApplicationID
+app_opted_in
+bnz l9
+int 0
+return
+b l10
+l9:
+int 0
+byte "OptedAppId"
+global CurrentApplicationID
+app_local_put
+int 0
+byte "AdvertiserUrl"
+txna ApplicationArgs 3
+app_local_put
+l10:
+int 1
+return
+l8:
 l5:
