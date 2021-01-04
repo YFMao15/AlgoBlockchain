@@ -17,13 +17,14 @@ class User():
         self.account_public_key = None
         self.account_private_key = None
         self.indexer_client = None
-        self.category = None
+        self.user_client = None
 
     def login(self):
         purestake_token = {'X-API-key': self.API_key}
         self.account_private_key = mnemonic.to_private_key(self.passphrase)
         self.account_public_key = mnemonic.to_public_key(self.passphrase)
         self.indexer_client = indexer.IndexerClient(self.API_key, self.user_address, headers=purestake_token)
+        self.user_client =  algod.AlgodClient(self.API_key, self.user_address, headers=purestake_token)
         print("The user account address is " + str(self.account_public_key))
         
 if __name__ == "__main__":

@@ -190,7 +190,6 @@ class Contract():
                         next_app_id = base64.b64decode(state['value']['bytes']).decode('utf-8')
                     if base64.b64decode(state['key']) == bytes(category_input, 'utf-8'):
                         if base64.b64decode(state['value']['bytes']).decode('utf-8') == "None":
-                            
                             return int(prev_app_id)
             return None
         else:
@@ -392,7 +391,7 @@ class Contract():
         # clear all info
         self.app_id = None
 
-    def external_search(self, category_input):
+    def external_search(self, user, category_input):
         self.read_head_app_id()
         results = []
         print("Searching for category " + str(category_input))
@@ -401,7 +400,7 @@ class Contract():
             next_app_id = prev_app_id + ""
             while next_app_id != "None":
                 prev_app_id = next_app_id + ""
-                app = self.indexer_client.applications(int(prev_app_id))
+                app = user.indexer_client.applications(int(prev_app_id))
                 if 'application' in app:
                     global_states = app['application']['params']['global-state']
                 else:
@@ -412,7 +411,7 @@ class Contract():
                     if base64.b64decode(state['key']) == bytes(category_input, 'utf-8'):
                         if base64.b64decode(state['value']['bytes']).decode('utf-8') != "None":
                             results.append(base64.b64decode(state['value']['bytes']).decode('utf-8'))
-                            local_vars = self.contract_client.account_info(base64.b64decode(state['value']['bytes']).decode('utf-8'))['apps-local-state']
+                            local_vars = user.user_client.account_info(base64.b64decode(state['value']['bytes']).decode('utf-8'))['apps-local-state']
                             for local_var in local_vars:
                                 if local_var['id'] == int(prev_app_id):
                                     for x in local_var['key-value']:
