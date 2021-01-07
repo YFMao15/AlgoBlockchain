@@ -166,7 +166,7 @@ if __name__ == "__main__":
     adv1.assign_category("Category1")
     start = time.time()
     for x in range(add_in_times):
-        time.sleep(3)
+        time.sleep(5)
         print("\n")
         contract_list.add_adv_into_list(adv1)
     print("The average time cost of " + add_in_times + " add-ins is: " + str((time.time() - start) / add_in_times))

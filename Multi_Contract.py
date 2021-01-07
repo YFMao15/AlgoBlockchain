@@ -2,6 +2,7 @@ import os
 import json
 import base64
 import re
+import time
 from pyteal import *
 from algosdk import mnemonic
 from algosdk.v2client import algod, indexer
@@ -18,6 +19,7 @@ class Multi_Contract():
             contract = self.contract_list[count]
             if contract.head_app_id == "None":
                 for _ in range(self.max_client_per_account):
+                    time.sleep(3)
                     contract.create_contract_app()
                     contract.chain_app(contract.app_id)
             
