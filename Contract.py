@@ -145,13 +145,7 @@ class Contract():
             txinfo = self.contract_client.pending_transaction_info(txid)
         print("Transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')))
 
-    def read_head_app_id(self):
-        purestake_token = {'X-API-key': self.API_key}
-        self.indexer_client = indexer.IndexerClient(
-            self.API_key, 
-            self.contract_address, 
-            headers=purestake_token)
-        
+    def read_head_app_id(self):        
         if os.path.exists(os.path.join(os.path.dirname(__file__), str(mnemonic.to_public_key(self.passphrase))+".txt" )):
             with open(os.path.join(os.path.dirname(__file__), str(mnemonic.to_public_key(self.passphrase))+".txt"), 'r') as fp:
                 try:
@@ -165,6 +159,7 @@ class Contract():
                     self.head_app_id = str(fp.readline())
             else:
                 os.remove(os.path.join(os.path.dirname(__file__), str(mnemonic.to_public_key(self.passphrase))+".txt"))
+                self.head_app_id = "None"
         else:
             self.head_app_id = "None"
 
@@ -284,7 +279,8 @@ class Contract():
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
         print("Write to app-id:",transaction_response['txn']['txn']['apid'])
 
-    def chain_app(self, chaining_advertiser, app_id):
+    def chain_app(self, app_id):
+        creator = mnemonic.to_public_key(self.passphrase)
         prev_app_id = self.head_app_id
         if prev_app_id == "None":
             self.head_app_id = str(self.app_id)
@@ -302,7 +298,7 @@ class Contract():
                     if base64.b64decode(state['key']) == b'NextApp':
                         next_app_id = base64.b64decode(state['value']['bytes']).decode('utf-8')
 
-            print("Chain advertiser info from account:", chaining_advertiser.account_public_key)
+            print("Chain app from account:", creator)
             params = self.contract_client.suggested_params()
             params.flat_fee = True
             params.fee = 0.1
@@ -310,8 +306,8 @@ class Contract():
                 b'Chain',
                 bytes(str(self.app_id), 'utf-8')
             ]
-            txn = transaction.ApplicationNoOpTxn(chaining_advertiser.account_public_key, params, int(prev_app_id), app_args=app_args)
-            signed_txn = txn.sign(chaining_advertiser.account_private_key)
+            txn = transaction.ApplicationNoOpTxn(creator, params, int(prev_app_id), app_args=app_args)
+            signed_txn = txn.sign(mnemonic.to_private_key(self.passphrase))
             tx_id = signed_txn.transaction.get_txid()
             self.contract_client.send_transactions([signed_txn])
             self.wait_for_confirmation(tx_id)
@@ -323,15 +319,9 @@ class Contract():
         self.read_head_app_id()
         result = self.search_blank(advertiser.category)
         # self.app_id -> opt-in, write, close_out, delete 
-        if result == None:
-            self.create_contract_app()
-            self.chain_app(advertiser, self.app_id)
-            self.opt_in_app(advertiser)
-            self.write_app(advertiser)
-        else:
-            self.app_id = result
-            self.opt_in_app(advertiser)
-            self.write_app(advertiser)
+        self.app_id = result
+        self.opt_in_app(advertiser)
+        self.write_app(advertiser)
 
     def close_out_app(self, close_out_advertiser):
         print("Close out app from account:", close_out_advertiser.account_public_key)
@@ -421,13 +411,8 @@ class Contract():
                                             results.append({key: value['uint']})
                                         else:
                                             results.append({key:  base64.b64decode(value['bytes']).decode('utf-8')})
-                                    break
-                            
-            
-            
-            print("The searching results of category " + category_input + " are:")
-            for x in results:
-                print(x)
+                                    break        
+            return results
         else:
             print("Head app is not existed!")
     

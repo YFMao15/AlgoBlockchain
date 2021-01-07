@@ -1,6 +1,7 @@
 from User import *
 from Advertiser import *
 from Contract import *
+from Multi_Contract import *
 import time
 
 def send_money(sender, receiver):
@@ -16,7 +17,7 @@ def send_money(sender, receiver):
 
     params = sender.algod_client.suggested_params()
     # 100 algorands
-    send_amount = 100000000
+    send_amount = 200000000
 
     txn = transaction.PaymentTxn(sender.account_public_key, params, receiver.account_public_key, send_amount)
     signed_txn = txn.sign(sender.account_private_key)
@@ -104,16 +105,27 @@ if __name__ == "__main__":
         passphrase = "nation raccoon regular credit father slow column describe awake tired ostrich elder what guitar follow output service brisk permit base enforce brother muscle about run")
     adv12.login()
 
-    temp = Advertiser(
+    temp1 = Advertiser(
         API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC",
         advertiser_address = "https://testnet-algorand.api.purestake.io/ps2",
         passphrase = "account impact timber wall weapon coil flat alert park sting west easy alter amateur lucky rose enhance mass script brain crop hint unusual abstract job")
-    temp.login()
+    temp1.login()
 
-    contract_client = Contract(
+    contract_client1 = Contract(
         API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC",
         contract_address = "https://testnet-algorand.api.purestake.io/ps2",
         passphrase = "account impact timber wall weapon coil flat alert park sting west easy alter amateur lucky rose enhance mass script brain crop hint unusual abstract job")
+
+    temp2 = Advertiser(
+        API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC",
+        advertiser_address = "https://testnet-algorand.api.purestake.io/ps2",
+        passphrase = "exotic jealous lyrics fragile deliver paper foster average bamboo slab actress still search cable easy slice hazard kite cancel oyster romance spike sword ability useful")
+    temp2.login()
+
+    contract_client2 = Contract(
+        API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC",
+        contract_address = "https://testnet-algorand.api.purestake.io/ps2",
+        passphrase = "exotic jealous lyrics fragile deliver paper foster average bamboo slab actress still search cable easy slice hazard kite cancel oyster romance spike sword ability useful")
 
     user = User(
         API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC",
@@ -133,77 +145,33 @@ if __name__ == "__main__":
     # send_money(banker,adv11)
     # send_money(banker,adv12)
     # send_money(banker,temp)
+    # send_money(banker, temp2)
     # send_money(banker, user)
 
-    contract_client.read_head_app_id()
-    contract_client.create_code()
-    contract_client.compile_code()
+    contract_client1.read_head_app_id()
+    contract_client1.create_code()
+    contract_client1.compile_code()
 
-    adv_count = 12
-    add_in_times = 30
-    category_count = 12
-    # for x in range(add_in_times):
-    #     time.sleep(3)
-    #     if x % adv_count == 0:
-    #         print("\n")
-    #         adv1.assign_category("Category"+ str(x % category_count+1))
-    #         contract_client.add_adv_into_app(adv1)
-
-    #     elif x % adv_count == 1:
-    #         print("\n")
-    #         adv2.assign_category("Category" + str(x % category_count+1))
-    #         contract_client.add_adv_into_app(adv2)
-
-    #     elif x % adv_count == 2:
-    #         print("\n")
-    #         adv3.assign_category("Category" + str(x % category_count+1))
-    #         contract_client.add_adv_into_app(adv3)
-
-    #     elif x % adv_count == 3:
-    #         print("\n")
-    #         adv4.assign_category("Category" + str(x % category_count+1))
-    #         contract_client.add_adv_into_app(adv4)
-        
-    #     elif x % adv_count == 4:
-    #         print("\n")
-    #         adv5.assign_category("Category"+ str(x % category_count+1))
-    #         contract_client.add_adv_into_app(adv5)
-
-    #     elif x % adv_count == 5:
-    #         print("\n")
-    #         adv6.assign_category("Category" + str(x % category_count+1))
-    #         contract_client.add_adv_into_app(adv6)
-
-    #     elif x % adv_count == 6:
-    #         print("\n")
-    #         adv7.assign_category("Category" + str(x % category_count+1))
-    #         contract_client.add_adv_into_app(adv7)
-
-    #     elif x % adv_count == 7:
-    #         print("\n")
-    #         adv8.assign_category("Category" + str(x % category_count+1))
-    #         contract_client.add_adv_into_app(adv8)
-        
-    #     elif x % adv_count == 8:
-    #         print("\n")
-    #         adv9.assign_category("Category"+ str(x % category_count+1))
-    #         contract_client.add_adv_into_app(adv9)
-
-    #     elif x % adv_count == 9:
-    #         print("\n")
-    #         adv10.assign_category("Category" + str(x % category_count+1))
-    #         contract_client.add_adv_into_app(adv10)
-
-    #     elif x % adv_count == 10:
-    #         print("\n")
-    #         adv11.assign_category("Category" + str(x % category_count+1))
-    #         contract_client.add_adv_into_app(adv11)
-
-    #     elif x % adv_count == 11:
-    #         print("\n")
-    #         adv12.assign_category("Category" + str(x % category_count+1))
-    #         contract_client.add_adv_into_app(adv12)
+    contract_client2.read_head_app_id()
+    contract_client2.create_code()
+    contract_client2.compile_code()
 
     start = time.time()
-    contract_client.external_search(user, "Category1")
-    print("\nThe searching time cost of " + str(add_in_times) + " add-ins is " + str(time.time() - start))
+    multi_contract = [contract_client1, contract_client2]
+    contract_list = Multi_Contract(multi_contract)
+    contract_list.create_list()
+    print("The time cost of initializing " + str(len(multi_contract)) + " contracts is: " + str(time.time() - start))
+    
+    add_in_times = 15
+    adv1.assign_category("Category1")
+    start = time.time()
+    for x in range(add_in_times):
+        time.sleep(3)
+        print("\n")
+        contract_list.add_adv_into_list(adv1)
+    print("The average time cost of " + add_in_times + " add-ins is: " + str((time.time() - start) / add_in_times))
+
+    start = time.time()
+    contract_list.external_search_list(user, "Category1")
+    print("The time cost of searching is: " + str(time.time() - start))
+    
