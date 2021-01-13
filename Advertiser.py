@@ -14,6 +14,7 @@ class Advertiser():
         self.API_key = API_key
         self.advertiser_address = advertiser_address
         self.passphrase = passphrase
+        self.log_file = "test.log"
         self.account_public_key = None
         self.account_private_key = None
         self.algod_client = None
@@ -26,11 +27,14 @@ class Advertiser():
         self.account_public_key = mnemonic.to_public_key(self.passphrase)
         self.algod_client = algod.AlgodClient(self.API_key, self.advertiser_address, headers=purestake_token)
         self.indexer_client = indexer.IndexerClient(self.API_key, self.advertiser_address, headers=purestake_token)
-        print("The advertiser account address is " + str(self.account_public_key))
+        self.log_file = "test.log"
+        with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+            fp.write("The advertiser logins into account " + str(self.account_public_key) + "\n")
 
     def assign_category(self, category):
         self.category = category
-        print("The advertiser account is included in " + category + " category")
+        with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+            fp.write("The advertiser account is included in " + category + " category\n")
 
     
 if __name__ == "__main__":

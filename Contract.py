@@ -1,6 +1,7 @@
 import os
 import json
 import base64
+import time
 import re
 from pyteal import *
 from algosdk import mnemonic
@@ -46,6 +47,7 @@ class Contract():
             self.API_key, 
             self.contract_address, 
             headers=purestake_token)
+        self.log_file = "test.log"
 
     def create_code(self):
         create = Seq([
@@ -139,11 +141,13 @@ class Contract():
         last_round = self.contract_client.status().get('last-round')
         txinfo = self.contract_client.pending_transaction_info(txid)
         while not (txinfo.get('confirmed-round') and txinfo.get('confirmed-round') > 0):
-            print("Waiting for confirmation...")
+            with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+                fp.write("Waiting for confirmation...\n")
             last_round += 1
             self.contract_client.status_after_block(last_round)
             txinfo = self.contract_client.pending_transaction_info(txid)
-        print("Transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')))
+        with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+            fp.write("Transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')) + "\n")
 
     def read_head_app_id(self):        
         if os.path.exists(os.path.join(os.path.dirname(__file__), str(mnemonic.to_public_key(self.passphrase))+".txt" )):
@@ -169,11 +173,13 @@ class Contract():
 
     def search_blank(self, category_input):
         self.read_head_app_id()
-        print("Searching blank area for category " + str(category_input))
+        with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+            fp.write("Searching blank area for category " + str(category_input) + "\n")
         if self.head_app_id != "None":
             prev_app_id = self.head_app_id + ""
             next_app_id = prev_app_id + ""
             while next_app_id != "None":
+                time.sleep(5)
                 prev_app_id = next_app_id + ""
                 app = self.indexer_client.applications(int(prev_app_id))
                 if 'application' in app:
@@ -220,10 +226,10 @@ class Contract():
         # display results
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
         self.app_id = transaction_response['application-index']
-        print("Created new app-id:", self.app_id)
+        with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+            fp.write("Created new app:" + str(self.app_id) + "\n")
 
     def opt_in_app(self, opt_in_advertiser):
-        print("Opt in app from account: ", opt_in_advertiser.account_public_key)
         params = self.contract_client.suggested_params()
         params.flat_fee = True
         params.fee = 0.1
@@ -238,7 +244,8 @@ class Contract():
         self.wait_for_confirmation(tx_id)
 
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
-        print("OptIn to app-id:", transaction_response['txn']['txn']['apid'])
+        with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+            fp.write("Opted-in to app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
             
     def write_app(self, writing_advertiser):
         prev_app_id = self.head_app_id
@@ -259,7 +266,6 @@ class Contract():
                         next_app_id = "None"
                         break
 
-        print("Write advertiser info from account:", writing_advertiser.account_public_key)
         params = self.contract_client.suggested_params()
         params.flat_fee = True
         params.fee = 0.1
@@ -277,7 +283,8 @@ class Contract():
         self.wait_for_confirmation(tx_id)
 
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
-        print("Write to app-id:",transaction_response['txn']['txn']['apid'])
+        with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+            fp.write("Write to app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
 
     def chain_app(self, app_id):
         creator = mnemonic.to_public_key(self.passphrase)
@@ -298,7 +305,6 @@ class Contract():
                     if base64.b64decode(state['key']) == b'NextApp':
                         next_app_id = base64.b64decode(state['value']['bytes']).decode('utf-8')
 
-            print("Chain app from account:", creator)
             params = self.contract_client.suggested_params()
             params.flat_fee = True
             params.fee = 0.1
@@ -313,7 +319,8 @@ class Contract():
             self.wait_for_confirmation(tx_id)
 
             transaction_response = self.contract_client.pending_transaction_info(tx_id)
-            print("Chain to app-id:",transaction_response['txn']['txn']['apid'])
+            with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+                fp.write("Chain to app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
 
     def add_adv_into_app(self, advertiser):
         self.read_head_app_id()
@@ -324,7 +331,6 @@ class Contract():
         self.write_app(advertiser)
 
     def close_out_app(self, close_out_advertiser):
-        print("Close out app from account:", close_out_advertiser.account_public_key)
         params = self.contract_client.suggested_params()
         params.flat_fee = True
         params.fee = 0.1
@@ -340,10 +346,10 @@ class Contract():
         self.wait_for_confirmation(tx_id)
 
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
-        print("Closed out to app-id: ",transaction_response['txn']['txn']['apid'])
+        with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+            fp.write("Closed out app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
             
     def clear_app(self, clear_advertiser):
-        print("Clear app from account:", clear_advertiser.account_public_key)
         params = self.contract_client.suggested_params()
         params.flat_fee = True
         params.fee = 0.1
@@ -359,7 +365,8 @@ class Contract():
         self.wait_for_confirmation(tx_id)
 
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
-        print("Cleared app-id:", transaction_response['txn']['txn']['apid'])    
+        with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+            fp.write("Cleared app: " + str(transaction_response['txn']['txn']['apid']) + "\n")    
 
     def delete_contract_app(self):
         creator = mnemonic.to_public_key(self.passphrase)
@@ -377,18 +384,21 @@ class Contract():
         self.wait_for_confirmation(tx_id)
 
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
-        print("Deleted app-id:", transaction_response['txn']['txn']['apid'])
+        with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+            fp.write("Deleted app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
         # clear all info
         self.app_id = None
 
     def external_search(self, user, category_input):
         self.read_head_app_id()
         results = []
-        print("Searching for category " + str(category_input))
+        with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+            fp.write("Searching for category " + str(category_input) + "\n")
         if self.head_app_id != "None":
             prev_app_id = self.head_app_id + ""
             next_app_id = prev_app_id + ""
             while next_app_id != "None":
+                time.sleep(5)
                 prev_app_id = next_app_id + ""
                 app = user.indexer_client.applications(int(prev_app_id))
                 if 'application' in app:

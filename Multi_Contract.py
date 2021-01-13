@@ -13,13 +13,13 @@ class Multi_Contract():
     def __init__(self, contract_list):
         self.contract_list = contract_list
         self.max_client_per_account = 10
+        self.log_file = "test.log"
 
     def create_list(self):
         for count in range(len(self.contract_list)):
             contract = self.contract_list[count]
             if contract.head_app_id == "None":
                 for _ in range(self.max_client_per_account):
-                    time.sleep(3)
                     contract.create_contract_app()
                     contract.chain_app(contract.app_id)
             
@@ -37,7 +37,9 @@ class Multi_Contract():
         for contract in self.contract_list:
             temp_result = contract.external_search(user, category_input)
             results += temp_result
-        print("The searching results from multi-contracts of category " + str(category_input) +" are: ")
-        print(results)
+        with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
+            fp.write("The searching results from multi-contracts of category " + str(category_input) +" are: \n")
+            for result in results:
+                fp.write(str(result) + "\n")
 
 

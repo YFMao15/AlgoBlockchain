@@ -16,7 +16,7 @@ def send_money(sender, receiver):
         print("Transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')))
 
     params = sender.algod_client.suggested_params()
-    # 100 algorands
+    # 200 algorands
     send_amount = 200000000
 
     txn = transaction.PaymentTxn(sender.account_public_key, params, receiver.account_public_key, send_amount)
@@ -162,13 +162,14 @@ if __name__ == "__main__":
     contract_list.create_list()
     print("The time cost of initializing " + str(len(multi_contract)) + " contracts is: " + str(time.time() - start))
     
-    add_in_times = 15
+    add_in_times = 8
     adv1.assign_category("Category1")
+    adv2.assign_category("Category1")
     start = time.time()
     for x in range(add_in_times):
-        time.sleep(5)
-        print("\n")
+        time.sleep(3)
         contract_list.add_adv_into_list(adv1)
+        contract_list.add_adv_into_list(adv2)
     print("The average time cost of " + add_in_times + " add-ins is: " + str((time.time() - start) / add_in_times))
 
     start = time.time()
