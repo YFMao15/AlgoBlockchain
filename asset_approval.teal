@@ -2,25 +2,25 @@
 txn ApplicationID
 int 0
 ==
-bnz l33
+bnz l209
 txn OnCompletion
 int DeleteApplication
 ==
-bnz l34
+bnz l210
 txn OnCompletion
 int OptIn
 ==
-bnz l35
+bnz l211
 txn OnCompletion
 int CloseOut
 ==
-bnz l36
+bnz l212
 txn OnCompletion
 int NoOp
 ==
-bnz l37
+bnz l213
 err
-l33:
+l209:
 byte "Creator"
 txn Sender
 app_global_put
@@ -65,19 +65,19 @@ byte "None"
 app_global_put
 int 1
 return
-b l38
-l34:
+b l214
+l210:
 txn Sender
 byte "Creator"
 app_global_get
 ==
 return
-b l38
-l35:
+b l214
+l211:
 int 1
 return
-b l38
-l36:
+b l214
+l212:
 int 0
 byte "OptedAppId"
 app_local_del
@@ -92,36 +92,36 @@ byte "None"
 app_global_put
 int 1
 return
-b l38
-l37:
+b l214
+l213:
 txna ApplicationArgs 0
 byte "Chain"
 ==
-bnz l39
+bnz l215
 txna ApplicationArgs 0
 byte "Write"
 ==
-bnz l40
+bnz l216
 err
-l39:
+l215:
 byte "NextApp"
 txna ApplicationArgs 1
 app_global_put
 int 1
 return
-b l41
-l40:
+b l217
+l216:
 txna ApplicationArgs 1
 txna ApplicationArgs 2
 app_global_put
 int 0
 global CurrentApplicationID
 app_opted_in
-bnz l42
+bnz l218
 int 0
 return
-b l43
-l42:
+b l219
+l218:
 int 0
 byte "OptedAppId"
 global CurrentApplicationID
@@ -130,8 +130,8 @@ int 0
 byte "AdvertiserUrl"
 txna ApplicationArgs 3
 app_local_put
-l43:
+l219:
 int 1
 return
-l41:
-l38:
+l217:
+l214:

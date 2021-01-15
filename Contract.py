@@ -48,6 +48,7 @@ class Contract():
             self.contract_address, 
             headers=purestake_token)
         self.log_file = "test.log"
+        self.contract_folder = os.path.join(os.path.dirname(__file__), "contract-app")
 
     def create_code(self):
         create = Seq([
@@ -149,9 +150,12 @@ class Contract():
         with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
             fp.write("Transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')) + "\n")
 
-    def read_head_app_id(self):        
-        if os.path.exists(os.path.join(os.path.dirname(__file__), str(mnemonic.to_public_key(self.passphrase))+".txt" )):
-            with open(os.path.join(os.path.dirname(__file__), str(mnemonic.to_public_key(self.passphrase))+".txt"), 'r') as fp:
+    def read_head_app_id(self):  
+        if not os.path.exists(self.contract_folder):
+            os.mkdir(self.contract_folder)  
+           
+        if os.path.exists(os.path.join(self.contract_folder, str(mnemonic.to_public_key(self.passphrase))+".txt" )):
+            with open(os.path.join(self.contract_folder, str(mnemonic.to_public_key(self.passphrase))+".txt"), 'r') as fp:
                 try:
                     self.indexer_client.applications(int(fp.readline()))
                 except:
@@ -159,16 +163,16 @@ class Contract():
                     pass
                 
             if self.head_app_id != "None":
-                with open(os.path.join(os.path.dirname(__file__), str(mnemonic.to_public_key(self.passphrase))+".txt"), 'r') as fp:
+                with open(os.path.join(self.contract_folder, str(mnemonic.to_public_key(self.passphrase))+".txt"), 'r') as fp:
                     self.head_app_id = str(fp.readline())
             else:
-                os.remove(os.path.join(os.path.dirname(__file__), str(mnemonic.to_public_key(self.passphrase))+".txt"))
+                os.remove(os.path.join(self.contract_folder, str(mnemonic.to_public_key(self.passphrase))+".txt"))
                 self.head_app_id = "None"
         else:
             self.head_app_id = "None"
 
     def write_head_app_id(self):
-        with open(os.path.join(os.path.dirname(__file__), str(mnemonic.to_public_key(self.passphrase))+".txt"), 'w') as fp:
+        with open(os.path.join(self.contract_folder, str(mnemonic.to_public_key(self.passphrase))+".txt"), 'w') as fp:
             fp.write(str(self.head_app_id))
 
     def search_blank(self, category_input):
@@ -179,7 +183,7 @@ class Contract():
             prev_app_id = self.head_app_id + ""
             next_app_id = prev_app_id + ""
             while next_app_id != "None":
-                time.sleep(5)
+                time.sleep(3)
                 prev_app_id = next_app_id + ""
                 app = self.indexer_client.applications(int(prev_app_id))
                 if 'application' in app:
@@ -398,7 +402,7 @@ class Contract():
             prev_app_id = self.head_app_id + ""
             next_app_id = prev_app_id + ""
             while next_app_id != "None":
-                time.sleep(5)
+                time.sleep(3)
                 prev_app_id = next_app_id + ""
                 app = user.indexer_client.applications(int(prev_app_id))
                 if 'application' in app:

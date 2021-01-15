@@ -21,7 +21,9 @@ class Multi_Contract():
             if contract.head_app_id == "None":
                 for _ in range(self.max_client_per_account):
                     contract.create_contract_app()
+                    time.sleep(1)
                     contract.chain_app(contract.app_id)
+                    time.sleep(1)
             
     def add_adv_into_list(self, advertiser):
         for contract in self.contract_list:
