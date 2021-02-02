@@ -3,13 +3,7 @@ int 0
 byte "OptedAppId"
 app_local_del
 int 0
-byte "OptedAppAddr"
-app_local_del
-int 0
 byte "AdvertiserUrl"
 app_local_del
-txna ApplicationArgs 1
-byte "None"
-app_global_put
 int 1
 return

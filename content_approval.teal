@@ -2,136 +2,146 @@
 txn ApplicationID
 int 0
 ==
-bnz l209
+bnz l12
 txn OnCompletion
 int DeleteApplication
 ==
-bnz l210
+bnz l13
 txn OnCompletion
 int OptIn
 ==
-bnz l211
+bnz l14
 txn OnCompletion
 int CloseOut
 ==
-bnz l212
+bnz l15
 txn OnCompletion
 int NoOp
 ==
-bnz l213
+bnz l16
 err
-l209:
-byte "Creator"
-txn Sender
+l12:
+txna ApplicationArgs 1
+byte "Content"
+==
+bnz l18
+err
+l18:
+byte "Hash"
+byte "None"
+sha256
 app_global_put
 byte "NextApp"
 byte "None"
 app_global_put
-byte "Category1"
+byte "Category"
+txna ApplicationArgs 2
+app_global_put
+byte "key 01"
 byte "None"
 app_global_put
-byte "Category2"
+byte "key 02"
 byte "None"
 app_global_put
-byte "Category3"
+byte "key 03"
 byte "None"
 app_global_put
-byte "Category4"
+byte "key 04"
 byte "None"
 app_global_put
-byte "Category5"
+byte "key 05"
 byte "None"
 app_global_put
-byte "Category6"
+byte "key 06"
 byte "None"
 app_global_put
-byte "Category7"
+byte "key 07"
 byte "None"
 app_global_put
-byte "Category8"
+byte "key 08"
 byte "None"
 app_global_put
-byte "Category9"
+byte "key 09"
 byte "None"
 app_global_put
-byte "Category10"
+byte "key 10"
 byte "None"
 app_global_put
-byte "Category11"
+byte "key 11"
 byte "None"
 app_global_put
-byte "Category12"
+byte "key 12"
 byte "None"
 app_global_put
 int 1
 return
-b l214
-l210:
+l19:
+b l17
+l13:
 txn Sender
 byte "Creator"
 app_global_get
 ==
 return
-b l214
-l211:
+b l17
+l14:
+txna ApplicationArgs 2
+txna ApplicationArgs 3
+app_global_put
+byte "Hash"
+byte "Hash"
+app_global_get
+txna ApplicationArgs 4
+concat
+txna ApplicationArgs 5
+concat
+sha256
+app_global_put
+int 0
+byte "OptedAppId"
+txna ApplicationArgs 4
+app_local_put
+int 0
+byte "AdvertiserUrl"
+txna ApplicationArgs 5
+app_local_put
 int 1
 return
-b l214
-l212:
+int 1
+return
+b l17
+l15:
 int 0
 byte "OptedAppId"
 app_local_del
 int 0
-byte "OptedAppAddr"
-app_local_del
-int 0
 byte "AdvertiserUrl"
 app_local_del
-txna ApplicationArgs 1
-byte "None"
-app_global_put
 int 1
 return
-b l214
-l213:
+b l17
+l16:
 txna ApplicationArgs 0
 byte "Chain"
 ==
-bnz l215
+bnz l20
 txna ApplicationArgs 0
-byte "Write"
+byte "Hash"
 ==
-bnz l216
+bnz l21
 err
-l215:
+l20:
 byte "NextApp"
 txna ApplicationArgs 1
 app_global_put
 int 1
 return
-b l217
-l216:
+b l22
+l21:
+byte "Hash"
 txna ApplicationArgs 1
-txna ApplicationArgs 2
 app_global_put
-int 0
-global CurrentApplicationID
-app_opted_in
-bnz l218
-int 0
-return
-b l219
-l218:
-int 0
-byte "OptedAppId"
-global CurrentApplicationID
-app_local_put
-int 0
-byte "AdvertiserUrl"
-txna ApplicationArgs 3
-app_local_put
-l219:
 int 1
 return
-l217:
-l214:
+l22:
+l17:
