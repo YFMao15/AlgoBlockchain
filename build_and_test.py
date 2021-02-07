@@ -3,9 +3,7 @@ import time
 import random
 from User import *
 from Advertiser import *
-from IndexContract import *
-from ContentContract import *
-from MultiContract import *
+from Contract import *
 
 
 def send_money(sender, receiver):
@@ -30,164 +28,99 @@ def send_money(sender, receiver):
 
 if __name__ == "__main__":
     API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC"
-    address = "https://testnet-algorand.api.purestake.io/ps2"
+    algod_address = "https://testnet-algorand.api.purestake.io/ps2"
+    index_address = "https://testnet-algorand.api.purestake.io/idx2"
 
     """
     CHANGE PARAMS HERE TO LAUNCH DIFFERENT MODE
     """
-    init = False
-    app_accounts = 2
-    cate_num = 5
+    init = True
+    cate_num = 1
+    adv_num = 10
 
     if init is True:
         if os.path.exists(os.path.join(os.path.dirname(__file__), "debug.log")):
             os.remove(os.path.join(os.path.dirname(__file__), "debug.log"))
-        if os.path.exists(os.path.join(os.path.dirname(__file__), "verify.log")):
-            os.remove(os.path.join(os.path.dirname(__file__), "verify.log"))
-        if os.path.exists(os.path.join(os.path.dirname(__file__), "index")):
-            index_files = os.listdir(os.path.join(os.path.dirname(__file__), "index"))
-            for x in index_files:
-                os.remove(os.path.join(os.path.dirname(__file__), "index", x))
+        if os.path.exists(os.path.join(os.path.dirname(__file__), "account.txt")):
+            os.remove(os.path.join(os.path.dirname(__file__), "account.txt"))
 
+    if os.path.exists(os.path.join(os.path.dirname(__file__), "verify.log")):
+            os.remove(os.path.join(os.path.dirname(__file__), "verify.log"))
     if os.path.exists(os.path.join(os.path.dirname(__file__), "search.log")):
         os.remove(os.path.join(os.path.dirname(__file__), "search.log"))
 
     temp_info = account.generate_account()
-    user = User(API_key, address, mnemonic.from_private_key(temp_info[0]))
+    user = User(API_key, algod_address, index_address, mnemonic.from_private_key(temp_info[0]))
     user.login()
 
     banker = Advertiser(
         API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC",
-        advertiser_address = "https://testnet-algorand.api.purestake.io/ps2",
+        algod_address = algod_address,
+        index_address = index_address,
         passphrase = "code thrive mouse code badge example pride stereo sell viable adjust planet text close erupt embrace nature upon february weekend humble surprise shrug absorb faint")
     banker.login()
 
-    # index passphrase must be stored locally
-    index_info = "meadow glare silk life neglect inject figure claw purity burden decide wonder cry clerk width case theme screen donor vault rice weasel host able peanut"
-    # temp = Advertiser(API_key, address, index_info)
-    # temp.login()
-    # send_money(banker, temp)
-    index = IndexContract(API_key, address, index_info)
-
-    multi_contract = MultiContract(init)
-    multi_contract.add_index_account(index)
-    multi_contract.index_account.create_code()
-    multi_contract.index_account.compile_code()
-    multi_contract.index_account.init_index_contract()
-
+    print("Building contract app...\n")
     if init is True:
-        for x in range(app_accounts):
-            content_info = mnemonic.from_private_key(account.generate_account()[0])
-            temp = Advertiser(API_key, address, content_info)
-            temp.login()
-            send_money(banker, temp)
-            content = ContentContract(API_key, address, content_info)
-            multi_contract.add_content_account(content)
-        print("Contract accounts created")
-    else:
         content_info = mnemonic.from_private_key(account.generate_account()[0])
-        temp = Advertiser(API_key, address, content_info)
+        temp = Advertiser(API_key, algod_address, index_address, content_info)
         temp.login()
         send_money(banker, temp)
-        content = ContentContract(API_key, address, content_info)
-        multi_contract.add_content_account(content)
+        contract = Contract(API_key, algod_address, index_address, content_info)
+        contract.create_code()
+        contract.compile_code()
+        contract.init_content_contract(cate_num)
+        with open(os.path.join(os.path.dirname(__file__), "account.txt"), "w") as fp:
+            fp.write(content_info)
+    else: 
+        with open(os.path.join(os.path.dirname(__file__), "account.txt"), "r") as fp:
+            content_info = fp.readline()
+        contract = Contract(API_key, algod_address, index_address, content_info)
+        contract.create_code()
+        contract.compile_code()
+    # print("Contract mneumonic passphrase: ")
+    # print(content_info)
+    print("Contract application building complete\n")
+
+    print("Adding advertisers...\n")
+    start = time.time()
+    for count in range(1, 1 + cate_num):
+        for _ in range(adv_num):
+            info = account.generate_account()
+            adv = Advertiser(API_key, algod_address, index_address, mnemonic.from_private_key(info[0]))
+            adv.login()
+            adv.assign_category("Category" + str(count))
+            send_money(banker, adv)
+            contract.opt_in_app(adv)
+        print("Category" + str(count) + " opted-in\n")
+    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+        fp.write("The time cost of opting in " + str(cate_num * adv_num) + " advertisers in each category is: " + str(time.time() - start) + "\n")
+    print("Advertiser opting-in complete\n")
+    time.sleep(10)
     
-    print("Adding advertisers")
-    for x in range(cate_num):
-        info = account.generate_account()
-        adv = Advertiser(API_key, address, mnemonic.from_private_key(info[0]))
-        adv.login()
-        adv.assign_category("Category1")
-        send_money(banker, adv)
-        multi_contract.add_adv_into_content_apps(adv)
-    print("Category1 opted-in")
-        
-    for x in range(cate_num):
-        info = account.generate_account()
-        adv = Advertiser(API_key, address, mnemonic.from_private_key(info[0]))
-        adv.login()
-        adv.assign_category("Category2")
-        send_money(banker, adv)
-        multi_contract.add_adv_into_content_apps(adv)
-    print("Category2 opted-in")
+    print("Testing searching capability of smart contract...\n")
+    search_category = "Category1"
+    start = time.time()
+    contract.full_search(user, search_category)
+    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+        fp.write("The time cost of search " + search_category + " is: " + str(time.time() - start) + "\n")
 
-    # for x in range(cate_num):
-    #     info = account.generate_account()
-    #     adv = Advertiser(API_key, address, mnemonic.from_private_key(info[0]))
-    #     adv.login()
-    #     adv.assign_category("Category3")
-    #     send_money(banker, adv)
-    #     multi_contract.add_adv_into_content_apps(adv)
-    # print("Category3 opted-in")
+    time.sleep(3)
+    start = time.time()
+    contract.create_hash_local_file(user)
+    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+        fp.write("The time cost of hash local file creation is: " + str(time.time() - start) + "\n")
 
-    # for x in range(cate_num):
-    #     info = account.generate_account()
-    #     adv = Advertiser(API_key, address, mnemonic.from_private_key(info[0]))
-    #     adv.login()
-    #     adv.assign_category("Category4")
-    #     send_money(banker, adv)
-    #     multi_contract.add_adv_into_content_apps(adv)
-    # print("Category4 opted-in")
-        
-    # for x in range(cate_num):
-    #     info = account.generate_account()
-    #     adv = Advertiser(API_key, address, mnemonic.from_private_key(info[0]))
-    #     adv.login()
-    #     adv.assign_category("Category5")
-    #     send_money(banker, adv)
-    #     multi_contract.add_adv_into_content_apps(adv)
-    # print("Category5 opted-in")
-        
-    # for x in range(cate_num):
-    #     info = account.generate_account()
-    #     adv = Advertiser(API_key, address, mnemonic.from_private_key(info[0]))
-    #     adv.login()
-    #     adv.assign_category("Category6")
-    #     send_money(banker, adv)
-    #     multi_contract.add_adv_into_content_apps(adv)
-    # print("Category6 opted-in")
-        
-    # for x in range(cate_num):
-    #     info = account.generate_account()
-    #     adv = Advertiser(API_key, address, mnemonic.from_private_key(info[0]))
-    #     adv.login()
-    #     adv.assign_category("Category7")
-    #     send_money(banker, adv)
-    #     multi_contract.add_adv_into_content_apps(adv)
-    # print("Category7 opted-in")
-        
-    # for x in range(cate_num):
-    #     info = account.generate_account()
-    #     adv = Advertiser(API_key, address, mnemonic.from_private_key(info[0]))
-    #     adv.login()
-    #     adv.assign_category("Category8")
-    #     send_money(banker, adv)
-    #     multi_contract.add_adv_into_content_apps(adv)
-    # print("Category8 opted-in")
-        
-    # for x in range(cate_num):
-    #     info = account.generate_account()
-    #     adv = Advertiser(API_key, address, mnemonic.from_private_key(info[0]))
-    #     adv.login()
-    #     adv.assign_category("Category9")
-    #     send_money(banker, adv)
-    #     multi_contract.add_adv_into_content_apps(adv)
-    # print("Category9 opted-in")
-        
-    # for x in range(cate_num):
-    #     info = account.generate_account()
-    #     adv = Advertiser(API_key, address, mnemonic.from_private_key(info[0]))
-    #     adv.login()
-    #     adv.assign_category("Category10")
-    #     send_money(banker, adv)
-    #     multi_contract.add_adv_into_content_apps(adv)
-    # print("Category10 opted-in")
-    
-    # search_category = "Category1"
-    # start = time.time()
-    # multi_contract.full_search(user, search_category)
-    # with open(os.path.join(multi_contract.content_account.directory, multi_contract.content_account.search_file), "a+") as fp:
-    #     fp.write("The time cost of search " + search_category + " is: " + str(time.time() - start))
+    start = time.time()
+    local_hexdigest = contract.compute_local_hash(user, "Category1")
+    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+        fp.write("The time cost of local hash computation " + search_category + " is: " + str(time.time() - start) + "\n")
 
-    multi_contract.verify_hash(user, "Category1")
+    start = time.time()
+    online_hexdigest = contract.search_hash(user, "Category1")
+    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+        fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")
         
+    print("The locally computed hash value is : " + local_hexdigest)
+    print("The hash value recorded in app is : " + online_hexdigest)
+    assert(local_hexdigest == online_hexdigest)

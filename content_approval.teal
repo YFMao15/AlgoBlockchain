@@ -2,115 +2,87 @@
 txn ApplicationID
 int 0
 ==
-bnz l12
+bnz l0
 txn OnCompletion
 int DeleteApplication
 ==
-bnz l13
+bnz l1
 txn OnCompletion
 int OptIn
 ==
-bnz l14
+bnz l2
 txn OnCompletion
 int CloseOut
 ==
-bnz l15
-txn OnCompletion
-int NoOp
-==
-bnz l16
+bnz l3
 err
-l12:
-txna ApplicationArgs 1
-byte "Content"
-==
-bnz l18
-err
-l18:
+l0:
+byte "Creator"
+txn Sender
+app_global_put
 byte "Hash"
 byte "None"
 sha256
 app_global_put
-byte "NextApp"
-byte "None"
+byte "Index"
+int 0
 app_global_put
 byte "Category"
-txna ApplicationArgs 2
-app_global_put
-byte "key 01"
-byte "None"
-app_global_put
-byte "key 02"
-byte "None"
-app_global_put
-byte "key 03"
-byte "None"
-app_global_put
-byte "key 04"
-byte "None"
-app_global_put
-byte "key 05"
-byte "None"
-app_global_put
-byte "key 06"
-byte "None"
-app_global_put
-byte "key 07"
-byte "None"
-app_global_put
-byte "key 08"
-byte "None"
-app_global_put
-byte "key 09"
-byte "None"
-app_global_put
-byte "key 10"
-byte "None"
-app_global_put
-byte "key 11"
-byte "None"
-app_global_put
-byte "key 12"
-byte "None"
+txna ApplicationArgs 1
 app_global_put
 int 1
 return
-l19:
-b l17
-l13:
+b l4
+l1:
 txn Sender
 byte "Creator"
 app_global_get
 ==
 return
-b l17
-l14:
-txna ApplicationArgs 2
-txna ApplicationArgs 3
-app_global_put
+b l4
+l2:
+txna ApplicationArgs 1
+byte "Category"
+app_global_get
+==
+bnz l5
+int 0
+return
+b l6
+l5:
 byte "Hash"
 byte "Hash"
 app_global_get
-txna ApplicationArgs 4
+txna ApplicationArgs 2
 concat
-txna ApplicationArgs 5
+txna ApplicationArgs 3
 concat
 sha256
 app_global_put
+byte "Index"
+byte "Index"
+app_global_get
+int 1
++
+app_global_put
 int 0
 byte "OptedAppId"
-txna ApplicationArgs 4
+txna ApplicationArgs 2
 app_local_put
 int 0
 byte "AdvertiserUrl"
-txna ApplicationArgs 5
+txna ApplicationArgs 3
+app_local_put
+int 0
+byte "Index"
+byte "Index"
+app_global_get
 app_local_put
 int 1
 return
-int 1
-return
-b l17
-l15:
+l6:
+b l4
+l3:
 int 0
 byte "OptedAppId"
 app_local_del
@@ -119,29 +91,4 @@ byte "AdvertiserUrl"
 app_local_del
 int 1
 return
-b l17
-l16:
-txna ApplicationArgs 0
-byte "Chain"
-==
-bnz l20
-txna ApplicationArgs 0
-byte "Hash"
-==
-bnz l21
-err
-l20:
-byte "NextApp"
-txna ApplicationArgs 1
-app_global_put
-int 1
-return
-b l22
-l21:
-byte "Hash"
-txna ApplicationArgs 1
-app_global_put
-int 1
-return
-l22:
-l17:
+l4:
