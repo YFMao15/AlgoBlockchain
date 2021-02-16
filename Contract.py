@@ -342,160 +342,164 @@ class Contract():
             fp.write("Created new app: " + str(curr_app_id) + "\n")
             
     def opt_in_app(self, opt_in_advertiser):
-        apps = opt_in_advertiser.algod_client.account_info(self.account_public_key)['created-apps']
-        app_id = None
-        matched = False
-        for app in apps:
-            if 'application' in app:
-                global_states = app['application']['params']['global-state']
-            else:
-                global_states = app['params']['global-state']
+        for category in opt_in_advertiser.category:
+            apps = opt_in_advertiser.algod_client.account_info(self.account_public_key)['created-apps']
+            app_id = None
+            matched = False
+            for app in apps:
+                if 'application' in app:
+                    global_states = app['application']['params']['global-state']
+                else:
+                    global_states = app['params']['global-state']
 
-            for state in global_states:
-                if base64.b64decode(state['key']).decode("utf-8") == "Category":
-                    if base64.b64decode(state['value']['bytes']).decode("utf-8") == opt_in_advertiser.category:
-                        matched = True
-                        app_id = int(app['id'])
-                        break
-            if matched is True:
-                break
-        assert(type(app_id) is int)
-        assert(matched is True)
+                for state in global_states:
+                    if base64.b64decode(state['key']).decode("utf-8") == "Category":
+                        if base64.b64decode(state['value']['bytes']).decode("utf-8") == category:
+                            matched = True
+                            app_id = int(app['id'])
+                            break
+                if matched is True:
+                    break
+            assert(type(app_id) is int)
+            assert(matched is True)
 
-        params = self.contract_client.suggested_params()
-        params.flat_fee = True
-        params.fee = 0.1
-        app_args = [
-            b'Opt-in',
-            bytes(opt_in_advertiser.category, 'utf-8'),
-            bytes("Url: " + str(opt_in_advertiser.account_public_key), 'utf-8'),
-        ]
+            params = self.contract_client.suggested_params()
+            params.flat_fee = True
+            params.fee = 0.1
+            app_args = [
+                b'Opt-in',
+                bytes(category, 'utf-8'),
+                bytes("Url: " + str(opt_in_advertiser.account_public_key), 'utf-8'),
+            ]
 
-        txn = transaction.ApplicationOptInTxn(opt_in_advertiser.account_public_key, params, app_id, app_args=app_args)
-        signed_txn = txn.sign(opt_in_advertiser.account_private_key)
-        tx_id = signed_txn.transaction.get_txid()
-        self.contract_client.send_transactions([signed_txn])
-        self.wait_for_confirmation(tx_id)
+            txn = transaction.ApplicationOptInTxn(opt_in_advertiser.account_public_key, params, app_id, app_args=app_args)
+            signed_txn = txn.sign(opt_in_advertiser.account_private_key)
+            tx_id = signed_txn.transaction.get_txid()
+            self.contract_client.send_transactions([signed_txn])
+            self.wait_for_confirmation(tx_id)
 
-        transaction_response = self.contract_client.pending_transaction_info(tx_id)
-        with open(os.path.join(self.directory, self.log_file), "a+") as fp:
-            fp.write("Opted-in and write to app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
+            transaction_response = self.contract_client.pending_transaction_info(tx_id)
+            with open(os.path.join(self.directory, self.log_file), "a+") as fp:
+                fp.write("Opted-in and write to app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
 
     def update_app(self, update_advertiser):
-        apps = update_advertiser.algod_client.account_info(self.account_public_key)['created-apps']
-        app_id = None
-        matched = False
-        for app in apps:
-            if 'application' in app:
-                global_states = app['application']['params']['global-state']
-            else:
-                global_states = app['params']['global-state']
+        for category in update_advertiser.category:
+            apps = update_advertiser.algod_client.account_info(self.account_public_key)['created-apps']
+            app_id = None
+            matched = False
+            for app in apps:
+                if 'application' in app:
+                    global_states = app['application']['params']['global-state']
+                else:
+                    global_states = app['params']['global-state']
 
-            for state in global_states:
-                if base64.b64decode(state['key']).decode("utf-8") == "Category":
-                    if base64.b64decode(state['value']['bytes']).decode("utf-8") == update_advertiser.category:
-                        matched = True
-                        app_id = int(app['id'])
-                        break
-            if matched is True:
-                break
-        assert(type(app_id) is int)
-        assert(matched is True)
+                for state in global_states:
+                    if base64.b64decode(state['key']).decode("utf-8") == "Category":
+                        if base64.b64decode(state['value']['bytes']).decode("utf-8") == category:
+                            matched = True
+                            app_id = int(app['id'])
+                            break
+                if matched is True:
+                    break
+            assert(type(app_id) is int)
+            assert(matched is True)
 
-        params = self.contract_client.suggested_params()
-        params.flat_fee = True
-        params.fee = 0.1
-        app_args = [
-            b'Update',
-            bytes(update_advertiser.category, 'utf-8'),
-            bytes("New: " + str(update_advertiser.account_public_key), 'utf-8'),
-        ]
+            params = self.contract_client.suggested_params()
+            params.flat_fee = True
+            params.fee = 0.1
+            app_args = [
+                b'Update',
+                bytes(category, 'utf-8'),
+                bytes("New: " + str(update_advertiser.account_public_key), 'utf-8'),
+            ]
 
-        txn = transaction.ApplicationNoOpTxn(update_advertiser.account_public_key, params, app_id, app_args=app_args)
-        signed_txn = txn.sign(update_advertiser.account_private_key)
-        tx_id = signed_txn.transaction.get_txid()
-        self.contract_client.send_transactions([signed_txn])
-        self.wait_for_confirmation(tx_id)
+            txn = transaction.ApplicationNoOpTxn(update_advertiser.account_public_key, params, app_id, app_args=app_args)
+            signed_txn = txn.sign(update_advertiser.account_private_key)
+            tx_id = signed_txn.transaction.get_txid()
+            self.contract_client.send_transactions([signed_txn])
+            self.wait_for_confirmation(tx_id)
 
-        transaction_response = self.contract_client.pending_transaction_info(tx_id)
-        with open(os.path.join(self.directory, self.log_file), "a+") as fp:
-            fp.write("Update app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
+            transaction_response = self.contract_client.pending_transaction_info(tx_id)
+            with open(os.path.join(self.directory, self.log_file), "a+") as fp:
+                fp.write("Update app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
         
     def close_out_app(self, close_out_advertiser):
-        apps = close_out_advertiser.algod_client.account_info(self.account_public_key)['created-apps']
-        app_id = None
-        matched = False
-        for app in apps:
-            if 'application' in app:
-                global_states = app['application']['params']['global-state']
-            else:
-                global_states = app['params']['global-state']
+        for category in close_out_advertiser.category:
+            apps = close_out_advertiser.algod_client.account_info(self.account_public_key)['created-apps']
+            app_id = None
+            matched = False
+            for app in apps:
+                if 'application' in app:
+                    global_states = app['application']['params']['global-state']
+                else:
+                    global_states = app['params']['global-state']
 
-            for state in global_states:
-                if base64.b64decode(state['key']).decode("utf-8") == "Category":
-                    if base64.b64decode(state['value']['bytes']).decode("utf-8") == close_out_advertiser.category:
-                        matched = True
-                        app_id = int(app['id'])
-                        break
-            if matched is True:
-                break
-        assert(type(app_id) is int)
-        assert(matched is True)
+                for state in global_states:
+                    if base64.b64decode(state['key']).decode("utf-8") == "Category":
+                        if base64.b64decode(state['value']['bytes']).decode("utf-8") == category:
+                            matched = True
+                            app_id = int(app['id'])
+                            break
+                if matched is True:
+                    break
+            assert(type(app_id) is int)
+            assert(matched is True)
 
-        params = self.contract_client.suggested_params()
-        params.flat_fee = True
-        params.fee = 0.1
-        app_args = [
-            b'Close_Out',
-        ]
-            
-        txn = transaction.ApplicationCloseOutTxn(close_out_advertiser.account_public_key, params, app_id, app_args=app_args)
-        signed_txn = txn.sign(close_out_advertiser.account_private_key)
-        tx_id = signed_txn.transaction.get_txid()
-        self.contract_client.send_transactions([signed_txn])
-        self.wait_for_confirmation(tx_id)
+            params = self.contract_client.suggested_params()
+            params.flat_fee = True
+            params.fee = 0.1
+            app_args = [
+                b'Close_Out',
+            ]
+                
+            txn = transaction.ApplicationCloseOutTxn(close_out_advertiser.account_public_key, params, app_id, app_args=app_args)
+            signed_txn = txn.sign(close_out_advertiser.account_private_key)
+            tx_id = signed_txn.transaction.get_txid()
+            self.contract_client.send_transactions([signed_txn])
+            self.wait_for_confirmation(tx_id)
 
-        transaction_response = self.contract_client.pending_transaction_info(tx_id)
-        with open(os.path.join(self.directory, self.log_file), "a+") as fp:
-            fp.write("Closed out app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
-            
+            transaction_response = self.contract_client.pending_transaction_info(tx_id)
+            with open(os.path.join(self.directory, self.log_file), "a+") as fp:
+                fp.write("Closed out app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
+                
     def clear_app(self, cleared_advertiser):
-        apps = cleared_advertiser.algod_client.account_info(self.account_public_key)['created-apps']
-        app_id = None
-        matched = False
-        for app in apps:
-            if 'application' in app:
-                global_states = app['application']['params']['global-state']
-            else:
-                global_states = app['params']['global-state']
+        for category in cleared_advertiser.category:
+            apps = cleared_advertiser.algod_client.account_info(self.account_public_key)['created-apps']
+            app_id = None
+            matched = False
+            for app in apps:
+                if 'application' in app:
+                    global_states = app['application']['params']['global-state']
+                else:
+                    global_states = app['params']['global-state']
 
-            for state in global_states:
-                if base64.b64decode(state['key']).decode("utf-8") == "Category":
-                    if base64.b64decode(state['value']['bytes']).decode("utf-8") == cleared_advertiser.category:
-                        matched = True
-                        app_id = int(app['id'])
-                        break
-            if matched is True:
-                break
-        assert(type(app_id) is int)
-        assert(matched is True)
+                for state in global_states:
+                    if base64.b64decode(state['key']).decode("utf-8") == "Category":
+                        if base64.b64decode(state['value']['bytes']).decode("utf-8") == category:
+                            matched = True
+                            app_id = int(app['id'])
+                            break
+                if matched is True:
+                    break
+            assert(type(app_id) is int)
+            assert(matched is True)
 
-        params = self.contract_client.suggested_params()
-        params.flat_fee = True
-        params.fee = 0.1
-        app_args = [
-            b'Clear',
-        ]
+            params = self.contract_client.suggested_params()
+            params.flat_fee = True
+            params.fee = 0.1
+            app_args = [
+                b'Clear',
+            ]
 
-        txn = transaction.ApplicationClearStateTxn(cleared_advertiser.account_public_key, params, app_id, app_args=app_args)
-        signed_txn = txn.sign(cleared_advertiser.account_private_key)
-        tx_id = signed_txn.transaction.get_txid()
-        self.contract_client.send_transactions([signed_txn])
-        self.wait_for_confirmation(tx_id)
+            txn = transaction.ApplicationClearStateTxn(cleared_advertiser.account_public_key, params, app_id, app_args=app_args)
+            signed_txn = txn.sign(cleared_advertiser.account_private_key)
+            tx_id = signed_txn.transaction.get_txid()
+            self.contract_client.send_transactions([signed_txn])
+            self.wait_for_confirmation(tx_id)
 
-        transaction_response = self.contract_client.pending_transaction_info(tx_id)
-        with open(os.path.join(self.directory, self.log_file), "a+") as fp:
-            fp.write("Cleared app: " + str(transaction_response['txn']['txn']['apid']) + "\n")    
+            transaction_response = self.contract_client.pending_transaction_info(tx_id)
+            with open(os.path.join(self.directory, self.log_file), "a+") as fp:
+                fp.write("Cleared app: " + str(transaction_response['txn']['txn']['apid']) + "\n")    
     
     def init_content_contract(self, category_num):
         with open(os.path.join(self.directory, self.log_file), "a+") as fp:

@@ -32,6 +32,8 @@ class Advertiser():
             fp.write("The advertiser logins into account " + str(self.account_public_key) + "\n")
 
     def assign_category(self, category):
+        assert(type(category) is list)
+        assert(len(category) > 0)
         self.category = category
         with open(os.path.join(os.path.dirname(__file__), self.log_file), "a+") as fp:
-            fp.write("The advertiser account is included in " + category + " category\n")
+            fp.write("The advertiser account is included in " + str(category) + " category\n")

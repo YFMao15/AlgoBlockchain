@@ -4,7 +4,7 @@ import random
 from User import *
 from Advertiser import *
 from Contract import *
-
+from collections import defaultdict
 
 def send_money(sender, receiver):
     def wait_for_confirmation(algodclient, txid):
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     """
     init = True
     cate_num = 1
-    adv_nums = [1000]
+    adv_nums = [5, 10]
 
     for adv_num in adv_nums:
         if init is True:
@@ -46,7 +46,7 @@ if __name__ == "__main__":
                 os.remove(os.path.join(os.path.dirname(__file__), "account.txt"))
 
         if os.path.exists(os.path.join(os.path.dirname(__file__), "verify.log")):
-                os.remove(os.path.join(os.path.dirname(__file__), "verify.log"))
+            os.remove(os.path.join(os.path.dirname(__file__), "verify.log"))
         if os.path.exists(os.path.join(os.path.dirname(__file__), "search.log")):
             os.remove(os.path.join(os.path.dirname(__file__), "search.log"))
 
@@ -71,9 +71,9 @@ if __name__ == "__main__":
             contract.create_code()
             contract.compile_code()
             contract.init_content_contract(cate_num)
-            #### TESTING ONLY
-            contract.log_file = "debug" + str(adv_num) + ".log"
-            ####
+            #### TESTING ONLY ####
+            contract.log_file = "debug_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".log"
+            ######################
             with open(os.path.join(os.path.dirname(__file__), "account.txt"), "w") as fp:
                 fp.write(content_info)
         else: 
@@ -87,21 +87,24 @@ if __name__ == "__main__":
         print("Contract application building complete\n")
 
         print("Adding advertisers...\n")
-        start = time.time()
-        for count in range(1, 1 + cate_num):
-            for _ in range(adv_num):
-                info = account.generate_account()
-                adv = Advertiser(API_key, algod_address, index_address, mnemonic.from_private_key(info[0]))
-                adv.login()
-                adv.assign_category("Category" + str(count))
-                send_money(banker, adv)
-                contract.opt_in_app(adv)
-            print("Category" + str(count) + " opted-in\n")
+        adv_list = defaultdict(list)
+        for x in range(adv_num):
+            info = account.generate_account()
+            adv = Advertiser(API_key, algod_address, index_address, mnemonic.from_private_key(info[0]))
+            adv.login()
+            adv.assign_category(["Category1"])
+            send_money(banker, adv)
+            if x == adv_num - 1:
+                start = time.time()
+            contract.opt_in_app(adv)
+            adv_list["Category1"].append(adv)
+        print("Category1 opted-in\n")
         with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-            fp.write("The time cost of opting in " + str(cate_num * adv_num) + " advertisers in each category is: " + str(time.time() - start) + "\n")
+            fp.write("The time cost of opting in one advertiser at " + str(adv_num) + "th place in each category is: " + str(time.time() - start) + "\n")
         print("Advertiser opting-in complete\n")
-        time.sleep(10)
-        
+        time.sleep(5)
+    
+        # search & online hash testing
         print("Testing searching capability of smart contract...\n")
         search_category = "Category1"
         start = time.time()
@@ -125,6 +128,56 @@ if __name__ == "__main__":
         with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
             fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")
             
-        print("The locally computed hash value is : " + local_hexdigest)
-        print("The hash value recorded in app is : " + online_hexdigest)
+        assert(local_hexdigest == online_hexdigest)
+
+        # close out testing
+        print("Testing closing out capability of smart contract...\n")
+        start = time.time()
+        closed_out_adv = adv_list[search_category][adv_num // 2]
+        contract.close_out_app(closed_out_adv)
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of closing out one advertiser in " + search_category + " is: " + str(time.time() - start) + "\n")
+
+        time.sleep(5)
+        start = time.time()
+        contract.create_hash_local_file(user)
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of hash local file creation is: " + str(time.time() - start) + "\n")
+
+        start = time.time()
+        local_hexdigest = contract.compute_local_hash(user, "Category1")
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of local hash computation " + search_category + " is: " + str(time.time() - start) + "\n")
+
+        start = time.time()
+        online_hexdigest = contract.search_hash(user, "Category1")
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")
+            
+        assert(local_hexdigest == online_hexdigest)
+
+        # update testing
+        print("Testing updating capability of smart contract...\n")
+        start = time.time()
+        updated_adv = adv_list[search_category][0]
+        contract.update_app(updated_adv)
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of updating one advertiser in " + search_category + " is: " + str(time.time() - start) + "\n")
+
+        time.sleep(5)
+        start = time.time()
+        contract.create_hash_local_file(user)
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of hash local file creation is: " + str(time.time() - start) + "\n")
+
+        start = time.time()
+        local_hexdigest = contract.compute_local_hash(user, "Category1")
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of local hash computation " + search_category + " is: " + str(time.time() - start) + "\n")
+
+        start = time.time()
+        online_hexdigest = contract.search_hash(user, "Category1")
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")
+            
         assert(local_hexdigest == online_hexdigest)
