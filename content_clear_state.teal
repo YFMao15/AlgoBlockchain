@@ -10,68 +10,111 @@ app_local_get
 concat
 sha256
 int 0
-int 8
+int 16
 substring3
 app_global_put
-byte "Hash1"
+byte "Prev1"
+byte "Prev"
 app_global_get
-int 0
-byte "Index"
-app_local_get
-itob
-int 0
-byte "AdvertiserUrl"
-app_local_get
-concat
-sha256
 int 0
 int 8
 substring3
 btoi
+app_global_put
+byte "Prev2"
+byte "Prev"
+app_global_get
+int 8
+int 16
+substring3
+btoi
+app_global_put
+byte "Hash2"
+app_global_get
+byte "Prev2"
+app_global_get
 >
-bnz l19
-byte "Hash1"
-byte "Hash1"
+bnz l35
+byte "Hash2"
+byte "Hash2"
 app_global_get
-int 0
-byte "Index"
-app_local_get
-itob
-int 0
-byte "AdvertiserUrl"
-app_local_get
-concat
-sha256
-int 0
-int 8
-substring3
-btoi
+byte "Prev2"
+app_global_get
 ~
 +
 app_global_put
-b l20
-l19:
+byte "Hash1"
+app_global_get
+int 1
+-
+byte "Prev1"
+app_global_get
+>
+bnz l38
 byte "Hash1"
 byte "Hash1"
 app_global_get
-int 0
-byte "Index"
-app_local_get
-itob
-int 0
-byte "AdvertiserUrl"
-app_local_get
-concat
-sha256
-int 0
-int 8
-substring3
-btoi
+int 1
+-
+byte "Prev1"
+app_global_get
+~
++
+app_global_put
+b l39
+l38:
+byte "Hash1"
+byte "Hash1"
+app_global_get
+int 1
+-
+byte "Prev1"
+app_global_get
 -
 app_global_put
-l20:
+l39:
+b l40
+l35:
+byte "Hash2"
+byte "Hash2"
+app_global_get
+byte "Prev2"
+app_global_get
+-
+app_global_put
+byte "Hash1"
+app_global_get
+byte "Prev1"
+app_global_get
+>
+bnz l36
+byte "Hash1"
+byte "Hash1"
+app_global_get
+byte "Prev1"
+app_global_get
+~
++
+app_global_put
+b l37
+l36:
+byte "Hash1"
+byte "Hash1"
+app_global_get
+byte "Prev1"
+app_global_get
+-
+app_global_put
+l37:
+l40:
 int 0
 byte "AdvertiserUrl"
 app_local_del
+byte "Prev"
+app_global_del
+byte "Prev1"
+app_global_del
+byte "Prev2"
+app_global_del
 int 1
 return

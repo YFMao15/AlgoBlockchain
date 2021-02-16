@@ -63,7 +63,7 @@ class Contract():
             # value of large number in decimal: 
             # Hash1 * 2**192 + Hash2 * 2**128 + Hash3 * 2**64 + Hash4
             App.globalPut(Bytes("Hash1"), Int(0)),
-            # App.globalPut(Bytes("Hash2"), Btoi(Substring(init_hash, Int(8), Int(16)))),
+            App.globalPut(Bytes("Hash2"), Int(0)),
             # App.globalPut(Bytes("Hash3"), Btoi(Substring(init_hash, Int(16), Int(24)))),
             # App.globalPut(Bytes("Hash4"), Btoi(Substring(init_hash, Int(24), Int(32)))),
             Return(Int(1))
@@ -71,18 +71,44 @@ class Contract():
 
         new_hash = Substring(
             Sha256(Concat(Itob(App.globalGet(Bytes("Index"))), Txn.application_args[2])),
-            Int(0), Int(8))
+            Int(0), Int(16))
 
         add_hash = If(
-            BitwiseNot(Btoi(App.globalGet(Bytes("Temp")))) > App.globalGet(Bytes("Hash1")),
-            App.globalPut(
-                Bytes("Hash1"), 
-                Add(Btoi(App.globalGet(Bytes("Temp"))), App.globalGet(Bytes("Hash1")))),
-            App.globalPut(
-                Bytes("Hash1"), 
-                Minus(
-                    Int(2**64 - 1),
-                    Add(BitwiseNot(Btoi(App.globalGet(Bytes("Temp")))), BitwiseNot(App.globalGet(Bytes("Hash1"))))))
+            BitwiseNot(App.globalGet(Bytes("Temp2"))) > App.globalGet(Bytes("Hash2")),
+            Seq([
+                App.globalPut(
+                    Bytes("Hash2"), 
+                    Add(App.globalGet(Bytes("Temp2")), App.globalGet(Bytes("Hash2")))),
+                If(
+                    BitwiseNot(App.globalGet(Bytes("Temp1"))) > App.globalGet(Bytes("Hash1")),
+                    App.globalPut(
+                        Bytes("Hash1"), 
+                        Add(App.globalGet(Bytes("Temp1")), App.globalGet(Bytes("Hash1")))),
+                    App.globalPut(
+                        Bytes("Hash1"), 
+                        Minus(
+                            Int(2**64 - 2),
+                            Add(BitwiseNot(App.globalGet(Bytes("Temp1"))), BitwiseNot(App.globalGet(Bytes("Hash1"))))))
+                )
+            ]),
+            Seq([
+                App.globalPut(
+                    Bytes("Hash2"), 
+                    Minus(
+                        Int(2**64 - 2),
+                        Add(BitwiseNot(App.globalGet(Bytes("Temp2"))), BitwiseNot(App.globalGet(Bytes("Hash2")))))),
+                If(
+                    BitwiseNot(App.globalGet(Bytes("Temp1"))) > App.globalGet(Bytes("Hash1")) + Int(1),
+                    App.globalPut(
+                        Bytes("Hash1"), 
+                        Add(App.globalGet(Bytes("Temp1")), App.globalGet(Bytes("Hash1")) + Int(1))),
+                    App.globalPut(
+                        Bytes("Hash1"), 
+                        Minus(
+                            Int(2**64 - 2),
+                            Add(BitwiseNot(App.globalGet(Bytes("Temp1"))), BitwiseNot(App.globalGet(Bytes("Hash1")) + Int(1))))),
+                )
+            ])
         )
 
         opt_in = If(
@@ -90,9 +116,14 @@ class Contract():
             Seq([
                 App.globalPut(Bytes("Index"), App.globalGet(Bytes("Index")) + Int(1)),
                 App.globalPut(Bytes("Temp"), new_hash),
+                App.globalPut(Bytes("Temp1"), Btoi(Substring(App.globalGet(Bytes("Temp")), Int(0), Int(8)))),
+                App.globalPut(Bytes("Temp2"), Btoi(Substring(App.globalGet(Bytes("Temp")), Int(8), Int(16)))),
                 add_hash,
                 App.localPut(Int(0), Bytes("Index"), App.globalGet(Bytes("Index"))),
                 App.localPut(Int(0), Bytes("AdvertiserUrl"), Txn.application_args[2]),
+                App.globalDel(Bytes("Temp")),
+                App.globalDel(Bytes("Temp1")),
+                App.globalDel(Bytes("Temp2")),
                 Return(Int(1))
             ]),
             Return(Int(0))   
@@ -100,30 +131,58 @@ class Contract():
 
         old_hash = Substring(
             Sha256(Concat(Itob(App.localGet(Int(0), Bytes("Index"))), App.localGet(Int(0), Bytes("AdvertiserUrl")))),
-            Int(0), Int(8))
+            Int(0), Int(16))
 
         minus_hash = If(
-            App.globalGet(Bytes("Hash1")) > Btoi(App.globalGet(Bytes("Prev"))),
-            App.globalPut(
-                Bytes("Hash1"),
-                Minus(
-                    App.globalGet(Bytes("Hash1")),
-                    Btoi(App.globalGet(Bytes("Prev"))))),
-            App.globalPut(
-                Bytes("Hash1"),
-                Add(
-                    App.globalGet(Bytes("Hash1")),
-                    BitwiseNot(Btoi(App.globalGet(Bytes("Prev"))))))
+            App.globalGet(Bytes("Hash2")) > App.globalGet(Bytes("Prev2")),
+            Seq([
+                App.globalPut(
+                    Bytes("Hash2"),
+                    Minus(App.globalGet(Bytes("Hash2")), App.globalGet(Bytes("Prev2")))),
+                If(
+                    App.globalGet(Bytes("Hash1")) > App.globalGet(Bytes("Prev1")),
+                    App.globalPut(
+                        Bytes("Hash1"),
+                        Minus(App.globalGet(Bytes("Hash1")), App.globalGet(Bytes("Prev1")))),
+                    App.globalPut(
+                        Bytes("Hash1"),
+                        Add(App.globalGet(Bytes("Hash1")), BitwiseNot(App.globalGet(Bytes("Prev1"))) + Int(1)))
+                )
+            ]),
+            Seq([
+                App.globalPut(
+                    Bytes("Hash2"),
+                    Add(App.globalGet(Bytes("Hash2")), BitwiseNot(App.globalGet(Bytes("Prev2"))) + Int(1))),
+                If(
+                    App.globalGet(Bytes("Hash1")) - Int(1) > App.globalGet(Bytes("Prev1")),
+                    App.globalPut(
+                        Bytes("Hash1"),
+                        Minus(App.globalGet(Bytes("Hash1")) - Int(1), App.globalGet(Bytes("Prev1")))),
+                    App.globalPut(
+                        Bytes("Hash1"),
+                        Add(App.globalGet(Bytes("Hash1")) - Int(1), BitwiseNot(App.globalGet(Bytes("Prev1"))) + Int(1)))
+                )
+            ])
         )
-
+        
         update = If(
             App.optedIn(Int(0), App.id()),
             Seq([
                 App.globalPut(Bytes("Prev"), old_hash),
+                App.globalPut(Bytes("Prev1"), Btoi(Substring(App.globalGet(Bytes("Prev")), Int(0), Int(8)))),
+                App.globalPut(Bytes("Prev2"), Btoi(Substring(App.globalGet(Bytes("Prev")), Int(8), Int(16)))),
                 App.globalPut(Bytes("Temp"), new_hash),
+                App.globalPut(Bytes("Temp1"), Btoi(Substring(App.globalGet(Bytes("Temp")), Int(0), Int(8)))),
+                App.globalPut(Bytes("Temp2"), Btoi(Substring(App.globalGet(Bytes("Temp")), Int(8), Int(16)))),
                 minus_hash,
                 add_hash,
                 App.localPut(Int(0), Bytes("AdvertiserUrl"), Txn.application_args[2]),
+                App.globalDel(Bytes("Prev")),
+                App.globalDel(Bytes("Prev1")),
+                App.globalDel(Bytes("Prev2")),
+                App.globalDel(Bytes("Temp")),
+                App.globalDel(Bytes("Temp1")),
+                App.globalDel(Bytes("Temp2")),
                 Return(Int(1))
             ]),
             Return(Int(0))
@@ -133,8 +192,13 @@ class Contract():
             App.optedIn(Int(0), App.id()),
             Seq([
                 App.globalPut(Bytes("Prev"), old_hash),
+                App.globalPut(Bytes("Prev1"), Btoi(Substring(App.globalGet(Bytes("Prev")), Int(0), Int(8)))),
+                App.globalPut(Bytes("Prev2"), Btoi(Substring(App.globalGet(Bytes("Prev")), Int(8), Int(16)))),
                 minus_hash,
                 App.localDel(Int(0), Bytes("AdvertiserUrl")),
+                App.globalDel(Bytes("Prev")),
+                App.globalDel(Bytes("Prev1")),
+                App.globalDel(Bytes("Prev2")),
                 Return(Int(1))
             ]),
             Return(Int(0))
@@ -152,26 +216,49 @@ class Contract():
         # clear state is similar to close out, meaning to wipe out all state records in the account if close out is failed
         old_hash = Substring(
             Sha256(Concat(Itob(App.localGet(Int(0), Bytes("Index"))), App.localGet(Int(0), Bytes("AdvertiserUrl")))),
-            Int(0), Int(8))
+            Int(0), Int(16))
 
         minus_hash = If(
-            App.globalGet(Bytes("Hash1")) > Btoi(old_hash),
-            App.globalPut(
-                Bytes("Hash1"),
-                Minus(
-                    App.globalGet(Bytes("Hash1")),
-                    Btoi(old_hash))),
-            App.globalPut(
-                Bytes("Hash1"),
-                Add(
-                    App.globalGet(Bytes("Hash1")),
-                    BitwiseNot(Btoi(old_hash))))
+            App.globalGet(Bytes("Hash2")) > App.globalGet(Bytes("Prev2")),
+            Seq([
+                App.globalPut(
+                    Bytes("Hash2"),
+                    Minus(App.globalGet(Bytes("Hash2")), App.globalGet(Bytes("Prev2")))),
+                If(
+                    App.globalGet(Bytes("Hash1")) > App.globalGet(Bytes("Prev1")),
+                    App.globalPut(
+                        Bytes("Hash1"),
+                        Minus(App.globalGet(Bytes("Hash1")), App.globalGet(Bytes("Prev1")))),
+                    App.globalPut(
+                        Bytes("Hash1"),
+                        Add(App.globalGet(Bytes("Hash1")), BitwiseNot(App.globalGet(Bytes("Prev1")))))
+                )
+            ]),
+            Seq([
+                App.globalPut(
+                    Bytes("Hash2"),
+                    Add(App.globalGet(Bytes("Hash2")), BitwiseNot(App.globalGet(Bytes("Prev2"))))),
+                If(
+                    App.globalGet(Bytes("Hash1")) - Int(1) > App.globalGet(Bytes("Prev1")),
+                    App.globalPut(
+                        Bytes("Hash1"),
+                        Minus(App.globalGet(Bytes("Hash1")) - Int(1), App.globalGet(Bytes("Prev1")))),
+                    App.globalPut(
+                        Bytes("Hash1"),
+                        Add(App.globalGet(Bytes("Hash1")) - Int(1), BitwiseNot(App.globalGet(Bytes("Prev1")))))
+                )
+            ])
         )
 
         clear_state = Seq([
             App.globalPut(Bytes("Prev"), old_hash),
+            App.globalPut(Bytes("Prev1"), Btoi(Substring(App.globalGet(Bytes("Prev")), Int(0), Int(8)))),
+            App.globalPut(Bytes("Prev2"), Btoi(Substring(App.globalGet(Bytes("Prev")), Int(8), Int(16)))),
             minus_hash,
             App.localDel(Int(0), Bytes("AdvertiserUrl")),
+            App.globalDel(Bytes("Prev")),
+            App.globalDel(Bytes("Prev1")),
+            App.globalDel(Bytes("Prev2")),
             Return(Int(1))
         ])
             
@@ -287,6 +374,46 @@ class Contract():
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
         with open(os.path.join(self.directory, self.log_file), "a+") as fp:
             fp.write("Opted-in and write to app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
+
+    def update_app(self, update_advertiser):
+        apps = update_advertiser.algod_client.account_info(self.account_public_key)['created-apps']
+        app_id = None
+        matched = False
+        for app in apps:
+            if 'application' in app:
+                global_states = app['application']['params']['global-state']
+            else:
+                global_states = app['params']['global-state']
+
+            for state in global_states:
+                if base64.b64decode(state['key']).decode("utf-8") == "Category":
+                    if base64.b64decode(state['value']['bytes']).decode("utf-8") == update_advertiser.category:
+                        matched = True
+                        app_id = int(app['id'])
+                        break
+            if matched is True:
+                break
+        assert(type(app_id) is int)
+        assert(matched is True)
+
+        params = self.contract_client.suggested_params()
+        params.flat_fee = True
+        params.fee = 0.1
+        app_args = [
+            b'Update',
+            bytes(update_advertiser.category, 'utf-8'),
+            bytes("New: " + str(update_advertiser.account_public_key), 'utf-8'),
+        ]
+
+        txn = transaction.ApplicationNoOpTxn(update_advertiser.account_public_key, params, app_id, app_args=app_args)
+        signed_txn = txn.sign(update_advertiser.account_private_key)
+        tx_id = signed_txn.transaction.get_txid()
+        self.contract_client.send_transactions([signed_txn])
+        self.wait_for_confirmation(tx_id)
+
+        transaction_response = self.contract_client.pending_transaction_info(tx_id)
+        with open(os.path.join(self.directory, self.log_file), "a+") as fp:
+            fp.write("Update app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
         
     def close_out_app(self, close_out_advertiser):
         apps = close_out_advertiser.algod_client.account_info(self.account_public_key)['created-apps']
@@ -363,28 +490,7 @@ class Contract():
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
         with open(os.path.join(self.directory, self.log_file), "a+") as fp:
             fp.write("Cleared app: " + str(transaction_response['txn']['txn']['apid']) + "\n")    
-
-    def delete_content_app(self, app_id):
-        apps = self.contract_client.account_info(self.account_public_key)['created-apps']
-        for app in apps:
-            app_id = int(app['id'])
-            params = self.contract_client.suggested_params()
-            params.flat_fee = True
-            params.fee = 0.1
-            app_args = [
-                b'Delete',
-            ]
-
-            txn = transaction.ApplicationDeleteTxn(self.account_public_key, params, app_id, app_args=app_args)
-            signed_txn = txn.sign(self.account_private_key)
-            tx_id = signed_txn.transaction.get_txid()
-            self.contract_client.send_transactions([signed_txn])
-            self.wait_for_confirmation(tx_id)
-
-            transaction_response = self.contract_client.pending_transaction_info(tx_id)
-            with open(os.path.join(self.directory, self.log_file), "a+") as fp:
-                fp.write("Deleted app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
-
+    
     def init_content_contract(self, category_num):
         with open(os.path.join(self.directory, self.log_file), "a+") as fp:
             fp.write("Start initializing contract application\n")
@@ -438,6 +544,9 @@ class Contract():
                 fp.write("\n")
 
     def create_hash_local_file(self, user):
+        if os.path.exists(os.path.join(self.directory, self.verify_file)):
+            os.remove(os.path.join(self.directory, self.verify_file))
+
         all_app_results = {}
         apps = user.algod_client.account_info(self.account_public_key)['created-apps']
         apps_info = []
@@ -454,6 +563,8 @@ class Contract():
             opted_in_accounts = user.indexer_client.accounts(limit=1000, application_id = app_info[0])['accounts']
             results = []
             for account in opted_in_accounts:
+                if 'key-value' not in account['apps-local-state'][0]:
+                    continue
                 local_states = account['apps-local-state'][0]['key-value']
                 index = None
                 content = None
@@ -486,10 +597,10 @@ class Contract():
             index = list(content.keys())[0]
             url = list(content.values())[0]
             local_hash.update(self.intToBytes(int(index)) + bytes(url, 'utf-8'))
-            local_digest = int(local_hash.hexdigest()[:16], 16)
+            local_digest = int(local_hash.hexdigest()[:32], 16)
             total_digest += local_digest
         
-        return total_digest % (2**64 - 1)
+        return total_digest % 2**128
 
     def search_hash(self, user, input_category):
         apps = user.algod_client.account_info(self.account_public_key)['created-apps']
@@ -522,15 +633,10 @@ class Contract():
         for state in global_states:
             if base64.b64decode(state['key']).decode("utf-8") == "Hash1":
                 hash_set[1] = str(state['value']['uint'])
-            # if base64.b64decode(state['key']).decode("utf-8") == "Hash2":
-            #     hash_set[2] = str(state['value']['uint'])
-            # if base64.b64decode(state['key']).decode("utf-8") == "Hash3":
-            #     hash_set[3] = str(state['value']['uint'])
-            # if base64.b64decode(state['key']).decode("utf-8") == "Hash4":
-            #     hash_set[4] = str(state['value']['uint'])
+            if base64.b64decode(state['key']).decode("utf-8") == "Hash2":
+                hash_set[2] = str(state['value']['uint'])
         hash_onchain = 0
         hash_set = sorted(hash_set.items(), key = lambda x : x[0])
-        # hash_onchain += int(hash_set[0][1])*(2**192) + int(hash_set[1][1])*(2**128) + int(hash_set[2][1])*(2**64) + int(hash_set[3][1])
-        hash_onchain = int(hash_set[0][1])
+        hash_onchain = int(hash_set[0][1]) * (2**64) + int(hash_set[1][1])
         return hash_onchain
         
