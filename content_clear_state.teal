@@ -41,6 +41,8 @@ app_global_get
 byte "Prev2"
 app_global_get
 ~
+int 1
++
 +
 app_global_put
 byte "Hash1"
@@ -59,6 +61,8 @@ int 1
 byte "Prev1"
 app_global_get
 ~
+int 1
++
 +
 app_global_put
 b l39
@@ -94,6 +98,8 @@ app_global_get
 byte "Prev1"
 app_global_get
 ~
+int 1
++
 +
 app_global_put
 b l37
@@ -107,6 +113,9 @@ app_global_get
 app_global_put
 l37:
 l40:
+int 0
+byte "Index"
+app_local_del
 int 0
 byte "AdvertiserUrl"
 app_local_del

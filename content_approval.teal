@@ -308,6 +308,9 @@ app_global_put
 l16:
 l19:
 int 0
+byte "Index"
+app_local_del
+int 0
 byte "AdvertiserUrl"
 app_local_del
 byte "Prev"
@@ -353,33 +356,6 @@ btoi
 app_global_put
 byte "Prev2"
 byte "Prev"
-app_global_get
-int 8
-int 16
-substring3
-btoi
-app_global_put
-byte "Temp"
-byte "Index"
-app_global_get
-itob
-txna ApplicationArgs 2
-concat
-sha256
-int 0
-int 16
-substring3
-app_global_put
-byte "Temp1"
-byte "Temp"
-app_global_get
-int 0
-int 8
-substring3
-btoi
-app_global_put
-byte "Temp2"
-byte "Temp"
 app_global_get
 int 8
 int 16
@@ -470,6 +446,43 @@ app_global_get
 app_global_put
 l24:
 l27:
+byte "Prev"
+app_global_del
+byte "Prev1"
+app_global_del
+byte "Prev2"
+app_global_del
+int 0
+byte "AdvertiserUrl"
+app_local_del
+byte "Temp"
+int 0
+byte "Index"
+app_local_get
+itob
+txna ApplicationArgs 2
+concat
+sha256
+int 0
+int 16
+substring3
+app_global_put
+byte "Temp1"
+byte "Temp"
+app_global_get
+int 0
+int 8
+substring3
+btoi
+app_global_put
+byte "Temp2"
+byte "Temp"
+app_global_get
+int 8
+int 16
+substring3
+btoi
+app_global_put
 byte "Temp2"
 app_global_get
 ~
@@ -564,12 +577,6 @@ int 0
 byte "AdvertiserUrl"
 txna ApplicationArgs 2
 app_local_put
-byte "Prev"
-app_global_del
-byte "Prev1"
-app_global_del
-byte "Prev2"
-app_global_del
 byte "Temp"
 app_global_del
 byte "Temp1"

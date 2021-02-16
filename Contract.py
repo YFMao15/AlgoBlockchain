@@ -9,7 +9,6 @@ from algosdk import mnemonic
 from algosdk.v2client import algod, indexer
 from algosdk.future import transaction
 from Cryptodome.Hash import SHA256
-from Cryptodome.Util.number import getPrime, isPrime
 
 class Contract():
     def __init__(self, API_key, algod_address, index_address, passphrase):
@@ -69,7 +68,7 @@ class Contract():
             Return(Int(1))
         ])
 
-        new_hash = Substring(
+        opt_in_hash = Substring(
             Sha256(Concat(Itob(App.globalGet(Bytes("Index"))), Txn.application_args[2])),
             Int(0), Int(16))
 
@@ -115,7 +114,7 @@ class Contract():
             Txn.application_args[1] == App.globalGet(Bytes("Category")),
             Seq([
                 App.globalPut(Bytes("Index"), App.globalGet(Bytes("Index")) + Int(1)),
-                App.globalPut(Bytes("Temp"), new_hash),
+                App.globalPut(Bytes("Temp"), opt_in_hash),
                 App.globalPut(Bytes("Temp1"), Btoi(Substring(App.globalGet(Bytes("Temp")), Int(0), Int(8)))),
                 App.globalPut(Bytes("Temp2"), Btoi(Substring(App.globalGet(Bytes("Temp")), Int(8), Int(16)))),
                 add_hash,
@@ -129,7 +128,7 @@ class Contract():
             Return(Int(0))   
         )
 
-        old_hash = Substring(
+        obsolete_hash = Substring(
             Sha256(Concat(Itob(App.localGet(Int(0), Bytes("Index"))), App.localGet(Int(0), Bytes("AdvertiserUrl")))),
             Int(0), Int(16))
 
@@ -164,22 +163,27 @@ class Contract():
                 )
             ])
         )
+
+        updated_hash = Substring(
+            Sha256(Concat(Itob(App.localGet(Int(0), Bytes("Index"))), Txn.application_args[2])),
+            Int(0), Int(16))
         
         update = If(
             App.optedIn(Int(0), App.id()),
             Seq([
-                App.globalPut(Bytes("Prev"), old_hash),
+                App.globalPut(Bytes("Prev"), obsolete_hash),
                 App.globalPut(Bytes("Prev1"), Btoi(Substring(App.globalGet(Bytes("Prev")), Int(0), Int(8)))),
                 App.globalPut(Bytes("Prev2"), Btoi(Substring(App.globalGet(Bytes("Prev")), Int(8), Int(16)))),
-                App.globalPut(Bytes("Temp"), new_hash),
-                App.globalPut(Bytes("Temp1"), Btoi(Substring(App.globalGet(Bytes("Temp")), Int(0), Int(8)))),
-                App.globalPut(Bytes("Temp2"), Btoi(Substring(App.globalGet(Bytes("Temp")), Int(8), Int(16)))),
                 minus_hash,
-                add_hash,
-                App.localPut(Int(0), Bytes("AdvertiserUrl"), Txn.application_args[2]),
                 App.globalDel(Bytes("Prev")),
                 App.globalDel(Bytes("Prev1")),
                 App.globalDel(Bytes("Prev2")),
+                App.localDel(Int(0), Bytes("AdvertiserUrl")),
+                App.globalPut(Bytes("Temp"), updated_hash),
+                App.globalPut(Bytes("Temp1"), Btoi(Substring(App.globalGet(Bytes("Temp")), Int(0), Int(8)))),
+                App.globalPut(Bytes("Temp2"), Btoi(Substring(App.globalGet(Bytes("Temp")), Int(8), Int(16)))),
+                add_hash,
+                App.localPut(Int(0), Bytes("AdvertiserUrl"), Txn.application_args[2]),
                 App.globalDel(Bytes("Temp")),
                 App.globalDel(Bytes("Temp1")),
                 App.globalDel(Bytes("Temp2")),
@@ -191,10 +195,11 @@ class Contract():
         close_out = If(
             App.optedIn(Int(0), App.id()),
             Seq([
-                App.globalPut(Bytes("Prev"), old_hash),
+                App.globalPut(Bytes("Prev"), obsolete_hash),
                 App.globalPut(Bytes("Prev1"), Btoi(Substring(App.globalGet(Bytes("Prev")), Int(0), Int(8)))),
                 App.globalPut(Bytes("Prev2"), Btoi(Substring(App.globalGet(Bytes("Prev")), Int(8), Int(16)))),
                 minus_hash,
+                App.localDel(Int(0), Bytes("Index")),
                 App.localDel(Int(0), Bytes("AdvertiserUrl")),
                 App.globalDel(Bytes("Prev")),
                 App.globalDel(Bytes("Prev1")),
@@ -214,7 +219,7 @@ class Contract():
         self.TEAL_approve_condition = program
 
         # clear state is similar to close out, meaning to wipe out all state records in the account if close out is failed
-        old_hash = Substring(
+        obsolete_hash = Substring(
             Sha256(Concat(Itob(App.localGet(Int(0), Bytes("Index"))), App.localGet(Int(0), Bytes("AdvertiserUrl")))),
             Int(0), Int(16))
 
@@ -231,13 +236,13 @@ class Contract():
                         Minus(App.globalGet(Bytes("Hash1")), App.globalGet(Bytes("Prev1")))),
                     App.globalPut(
                         Bytes("Hash1"),
-                        Add(App.globalGet(Bytes("Hash1")), BitwiseNot(App.globalGet(Bytes("Prev1")))))
+                        Add(App.globalGet(Bytes("Hash1")), BitwiseNot(App.globalGet(Bytes("Prev1"))) + Int(1)))
                 )
             ]),
             Seq([
                 App.globalPut(
                     Bytes("Hash2"),
-                    Add(App.globalGet(Bytes("Hash2")), BitwiseNot(App.globalGet(Bytes("Prev2"))))),
+                    Add(App.globalGet(Bytes("Hash2")), BitwiseNot(App.globalGet(Bytes("Prev2"))) + Int(1))),
                 If(
                     App.globalGet(Bytes("Hash1")) - Int(1) > App.globalGet(Bytes("Prev1")),
                     App.globalPut(
@@ -245,16 +250,17 @@ class Contract():
                         Minus(App.globalGet(Bytes("Hash1")) - Int(1), App.globalGet(Bytes("Prev1")))),
                     App.globalPut(
                         Bytes("Hash1"),
-                        Add(App.globalGet(Bytes("Hash1")) - Int(1), BitwiseNot(App.globalGet(Bytes("Prev1")))))
+                        Add(App.globalGet(Bytes("Hash1")) - Int(1), BitwiseNot(App.globalGet(Bytes("Prev1"))) + Int(1)))
                 )
             ])
         )
 
         clear_state = Seq([
-            App.globalPut(Bytes("Prev"), old_hash),
+            App.globalPut(Bytes("Prev"), obsolete_hash),
             App.globalPut(Bytes("Prev1"), Btoi(Substring(App.globalGet(Bytes("Prev")), Int(0), Int(8)))),
             App.globalPut(Bytes("Prev2"), Btoi(Substring(App.globalGet(Bytes("Prev")), Int(8), Int(16)))),
             minus_hash,
+            App.localDel(Int(0), Bytes("Index")),
             App.localDel(Int(0), Bytes("AdvertiserUrl")),
             App.globalDel(Bytes("Prev")),
             App.globalDel(Bytes("Prev1")),
