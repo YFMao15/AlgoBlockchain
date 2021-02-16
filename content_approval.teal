@@ -4,43 +4,32 @@ int 0
 ==
 bnz l0
 txn OnCompletion
-int DeleteApplication
+int OptIn
 ==
 bnz l1
 txn OnCompletion
-int OptIn
+int CloseOut
 ==
 bnz l2
 txn OnCompletion
-int CloseOut
+int NoOp
 ==
 bnz l3
 err
 l0:
-byte "Creator"
-txn Sender
-app_global_put
-byte "Hash"
-byte "None"
-sha256
-app_global_put
 byte "Index"
 int 0
 app_global_put
 byte "Category"
 txna ApplicationArgs 1
 app_global_put
+byte "Hash1"
+int 0
+app_global_put
 int 1
 return
 b l4
 l1:
-txn Sender
-byte "Creator"
-app_global_get
-==
-return
-b l4
-l2:
 txna ApplicationArgs 1
 byte "Category"
 app_global_get
@@ -48,47 +37,223 @@ app_global_get
 bnz l5
 int 0
 return
-b l6
+b l8
 l5:
-byte "Hash"
-byte "Hash"
-app_global_get
-txna ApplicationArgs 2
-concat
-txna ApplicationArgs 3
-concat
-sha256
-app_global_put
 byte "Index"
 byte "Index"
 app_global_get
 int 1
 +
 app_global_put
-int 0
-byte "OptedAppId"
+byte "Temp"
+byte "Index"
+app_global_get
+itob
 txna ApplicationArgs 2
-app_local_put
+concat
+sha256
 int 0
-byte "AdvertiserUrl"
-txna ApplicationArgs 3
-app_local_put
+int 8
+substring3
+app_global_put
+byte "Temp"
+app_global_get
+btoi
+~
+byte "Hash1"
+app_global_get
+>
+bnz l6
+byte "Hash1"
+int 18446744073709551615
+byte "Temp"
+app_global_get
+btoi
+~
+byte "Hash1"
+app_global_get
+~
++
+-
+app_global_put
+b l7
+l6:
+byte "Hash1"
+byte "Temp"
+app_global_get
+btoi
+byte "Hash1"
+app_global_get
++
+app_global_put
+l7:
 int 0
 byte "Index"
 byte "Index"
 app_global_get
 app_local_put
+int 0
+byte "AdvertiserUrl"
+txna ApplicationArgs 2
+app_local_put
 int 1
 return
-l6:
+l8:
 b l4
-l3:
+l2:
 int 0
-byte "OptedAppId"
-app_local_del
+global CurrentApplicationID
+app_opted_in
+bnz l9
+int 0
+return
+b l12
+l9:
+byte "Prev"
+int 0
+byte "Index"
+app_local_get
+itob
+int 0
+byte "AdvertiserUrl"
+app_local_get
+concat
+sha256
+int 0
+int 8
+substring3
+app_global_put
+byte "Hash1"
+app_global_get
+byte "Prev"
+app_global_get
+btoi
+>
+bnz l10
+byte "Hash1"
+byte "Hash1"
+app_global_get
+byte "Prev"
+app_global_get
+btoi
+~
++
+app_global_put
+b l11
+l10:
+byte "Hash1"
+byte "Hash1"
+app_global_get
+byte "Prev"
+app_global_get
+btoi
+-
+app_global_put
+l11:
 int 0
 byte "AdvertiserUrl"
 app_local_del
 int 1
 return
+l12:
+b l4
+l3:
+int 0
+global CurrentApplicationID
+app_opted_in
+bnz l13
+int 0
+return
+b l18
+l13:
+byte "Prev"
+int 0
+byte "Index"
+app_local_get
+itob
+int 0
+byte "AdvertiserUrl"
+app_local_get
+concat
+sha256
+int 0
+int 8
+substring3
+app_global_put
+byte "Temp"
+byte "Index"
+app_global_get
+itob
+txna ApplicationArgs 2
+concat
+sha256
+int 0
+int 8
+substring3
+app_global_put
+byte "Hash1"
+app_global_get
+byte "Prev"
+app_global_get
+btoi
+>
+bnz l14
+byte "Hash1"
+byte "Hash1"
+app_global_get
+byte "Prev"
+app_global_get
+btoi
+~
++
+app_global_put
+b l15
+l14:
+byte "Hash1"
+byte "Hash1"
+app_global_get
+byte "Prev"
+app_global_get
+btoi
+-
+app_global_put
+l15:
+byte "Temp"
+app_global_get
+btoi
+~
+byte "Hash1"
+app_global_get
+>
+bnz l16
+byte "Hash1"
+int 18446744073709551615
+byte "Temp"
+app_global_get
+btoi
+~
+byte "Hash1"
+app_global_get
+~
++
+-
+app_global_put
+b l17
+l16:
+byte "Hash1"
+byte "Temp"
+app_global_get
+btoi
+byte "Hash1"
+app_global_get
++
+app_global_put
+l17:
+int 0
+byte "AdvertiserUrl"
+txna ApplicationArgs 2
+app_local_put
+int 1
+return
+l18:
 l4:

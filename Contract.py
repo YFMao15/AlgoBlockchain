@@ -5,10 +5,11 @@ import json
 import base64
 import time
 from pyteal import *
-from Crypto.Hash import SHA256
 from algosdk import mnemonic
 from algosdk.v2client import algod, indexer
 from algosdk.future import transaction
+from Cryptodome.Hash import SHA256
+from Cryptodome.Util.number import getPrime, isPrime
 
 class Contract():
     def __init__(self, API_key, algod_address, index_address, passphrase):
@@ -56,53 +57,124 @@ class Contract():
 
     def create_code(self):
         create_content = Seq([
-            App.globalPut(Bytes("Creator"), Txn.sender()),
-            App.globalPut(Bytes("Hash"), Sha256(Bytes("None"))),
             App.globalPut(Bytes("Index"), Int(0)),
             App.globalPut(Bytes("Category"), Txn.application_args[1]),
+            # 1-4: from MSB to LSB
+            # value of large number in decimal: 
+            # Hash1 * 2**192 + Hash2 * 2**128 + Hash3 * 2**64 + Hash4
+            App.globalPut(Bytes("Hash1"), Int(0)),
+            # App.globalPut(Bytes("Hash2"), Btoi(Substring(init_hash, Int(8), Int(16)))),
+            # App.globalPut(Bytes("Hash3"), Btoi(Substring(init_hash, Int(16), Int(24)))),
+            # App.globalPut(Bytes("Hash4"), Btoi(Substring(init_hash, Int(24), Int(32)))),
             Return(Int(1))
         ])
+
+        new_hash = Substring(
+            Sha256(Concat(Itob(App.globalGet(Bytes("Index"))), Txn.application_args[2])),
+            Int(0), Int(8))
+
+        add_hash = If(
+            BitwiseNot(Btoi(App.globalGet(Bytes("Temp")))) > App.globalGet(Bytes("Hash1")),
+            App.globalPut(
+                Bytes("Hash1"), 
+                Add(Btoi(App.globalGet(Bytes("Temp"))), App.globalGet(Bytes("Hash1")))),
+            App.globalPut(
+                Bytes("Hash1"), 
+                Minus(
+                    Int(2**64 - 1),
+                    Add(BitwiseNot(Btoi(App.globalGet(Bytes("Temp")))), BitwiseNot(App.globalGet(Bytes("Hash1"))))))
+        )
 
         opt_in = If(
             Txn.application_args[1] == App.globalGet(Bytes("Category")),
             Seq([
-                App.globalPut(Bytes("Hash"), Sha256(Concat(
-                    App.globalGet(Bytes("Hash")),
-                    Txn.application_args[2],
-                    Txn.application_args[3]
-                ))),
                 App.globalPut(Bytes("Index"), App.globalGet(Bytes("Index")) + Int(1)),
-                App.localPut(Int(0), Bytes("OptedAppId"), Txn.application_args[2]),
-                App.localPut(Int(0), Bytes("AdvertiserUrl"), Txn.application_args[3]),
+                App.globalPut(Bytes("Temp"), new_hash),
+                add_hash,
                 App.localPut(Int(0), Bytes("Index"), App.globalGet(Bytes("Index"))),
+                App.localPut(Int(0), Bytes("AdvertiserUrl"), Txn.application_args[2]),
                 Return(Int(1))
             ]),
             Return(Int(0))   
         )
 
-        close_out = Seq([
-            App.localDel(Int(0), Bytes("OptedAppId")),
-            App.localDel(Int(0), Bytes("AdvertiserUrl")),
-            Return(Int(1))
-        ])
+        old_hash = Substring(
+            Sha256(Concat(Itob(App.localGet(Int(0), Bytes("Index"))), App.localGet(Int(0), Bytes("AdvertiserUrl")))),
+            Int(0), Int(8))
 
-        is_creator = Txn.sender() == App.globalGet(Bytes("Creator"))
+        minus_hash = If(
+            App.globalGet(Bytes("Hash1")) > Btoi(App.globalGet(Bytes("Prev"))),
+            App.globalPut(
+                Bytes("Hash1"),
+                Minus(
+                    App.globalGet(Bytes("Hash1")),
+                    Btoi(App.globalGet(Bytes("Prev"))))),
+            App.globalPut(
+                Bytes("Hash1"),
+                Add(
+                    App.globalGet(Bytes("Hash1")),
+                    BitwiseNot(Btoi(App.globalGet(Bytes("Prev"))))))
+        )
+
+        update = If(
+            App.optedIn(Int(0), App.id()),
+            Seq([
+                App.globalPut(Bytes("Prev"), old_hash),
+                App.globalPut(Bytes("Temp"), new_hash),
+                minus_hash,
+                add_hash,
+                App.localPut(Int(0), Bytes("AdvertiserUrl"), Txn.application_args[2]),
+                Return(Int(1))
+            ]),
+            Return(Int(0))
+        )
+
+        close_out = If(
+            App.optedIn(Int(0), App.id()),
+            Seq([
+                App.globalPut(Bytes("Prev"), old_hash),
+                minus_hash,
+                App.localDel(Int(0), Bytes("AdvertiserUrl")),
+                Return(Int(1))
+            ]),
+            Return(Int(0))
+        )
 
         program = Cond(
             # if Txn.application _id() == 0 then it is the creation of this application.
             [Txn.application_id() == Int(0), create_content],
-            [Txn.on_completion() == OnComplete.DeleteApplication, Return(is_creator)],
             [Txn.on_completion() == OnComplete.OptIn, opt_in],
             [Txn.on_completion() == OnComplete.CloseOut, close_out],
+            [Txn.on_completion() == OnComplete.NoOp, update]
         )
         self.TEAL_approve_condition = program
 
         # clear state is similar to close out, meaning to wipe out all state records in the account if close out is failed
+        old_hash = Substring(
+            Sha256(Concat(Itob(App.localGet(Int(0), Bytes("Index"))), App.localGet(Int(0), Bytes("AdvertiserUrl")))),
+            Int(0), Int(8))
+
+        minus_hash = If(
+            App.globalGet(Bytes("Hash1")) > Btoi(old_hash),
+            App.globalPut(
+                Bytes("Hash1"),
+                Minus(
+                    App.globalGet(Bytes("Hash1")),
+                    Btoi(old_hash))),
+            App.globalPut(
+                Bytes("Hash1"),
+                Add(
+                    App.globalGet(Bytes("Hash1")),
+                    BitwiseNot(Btoi(old_hash))))
+        )
+
         clear_state = Seq([
-            App.localDel(Int(0), Bytes("OptedAppId")),
+            App.globalPut(Bytes("Prev"), old_hash),
+            minus_hash,
             App.localDel(Int(0), Bytes("AdvertiserUrl")),
             Return(Int(1))
         ])
+            
         program = clear_state
         self.TEAL_clear_condition = program
 
@@ -131,13 +203,28 @@ class Contract():
         with open(os.path.join(self.directory, self.log_file), "a+") as fp:
             fp.write("Transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')) + "\n")        
 
+    def intToBytes(self, integer):
+        lower8 = (1 << 8) - 1
+        char_list = [
+            (integer >> (8*7)) & lower8,
+            (integer >> (8*6)) & lower8,
+            (integer >> (8*5)) & lower8,
+            (integer >> (8*4)) & lower8,
+            (integer >> (8*3)) & lower8,
+            (integer >> (8*2)) & lower8,
+            (integer >> (8*1)) & lower8,
+            integer & lower8
+        ]
+        string = ''.join(chr(c) for c in char_list)
+        return string.encode('latin1')
+
     def create_content_app(self, input_category):
         on_complete = transaction.OnComplete.NoOpOC.real
         params = self.contract_client.suggested_params()
         params.flat_fee = True
         params.fee = 0.1
 
-        global_schema = transaction.StateSchema(5, 16)
+        global_schema = transaction.StateSchema(16, 6)
         local_schema = transaction.StateSchema(6, 6)
 
         app_args = [
@@ -188,7 +275,6 @@ class Contract():
         app_args = [
             b'Opt-in',
             bytes(opt_in_advertiser.category, 'utf-8'),
-            bytes(str(app_id), 'utf-8'),
             bytes("Url: " + str(opt_in_advertiser.account_public_key), 'utf-8'),
         ]
 
@@ -201,7 +287,7 @@ class Contract():
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
         with open(os.path.join(self.directory, self.log_file), "a+") as fp:
             fp.write("Opted-in and write to app: " + str(transaction_response['txn']['txn']['apid']) + "\n")
-
+        
     def close_out_app(self, close_out_advertiser):
         apps = close_out_advertiser.algod_client.account_info(self.account_public_key)['created-apps']
         app_id = None
@@ -340,8 +426,11 @@ class Contract():
         for account in opted_in_accounts:
             local_states = account['apps-local-state'][0]['key-value']
             for state in local_states:
-                if base64.b64decode(state['key']).decode("utf-8") != "Index":
-                    results.append(base64.b64decode(state['value']['bytes']).decode("utf-8"))
+                title = base64.b64decode(state['key']).decode("utf-8")
+                if title == "Index":
+                    results.append(title + " : " + str(state['value']['uint']))
+                else:
+                    results.append(title + " : " + base64.b64decode(state['value']['bytes']).decode("utf-8"))
         
         with open(os.path.join(self.directory, self.search_file), "a+") as fp:
             for result in results:
@@ -364,23 +453,18 @@ class Contract():
         for app_info in apps_info:
             opted_in_accounts = user.indexer_client.accounts(limit=1000, application_id = app_info[0])['accounts']
             results = []
-            results.append((0, ["None"]))
             for account in opted_in_accounts:
                 local_states = account['apps-local-state'][0]['key-value']
                 index = None
-                opted_id = None
                 content = None
                 for state in local_states:
                     if base64.b64decode(state['key']).decode("utf-8") == "Index":
-                        index = int(state['value']['uint'])
-                    elif base64.b64decode(state['key']).decode("utf-8") == "OptedAppId":
-                        opted_id = base64.b64decode(state['value']['bytes']).decode("utf-8")
+                        index = state['value']['uint']
                     elif base64.b64decode(state['key']).decode("utf-8") == "AdvertiserUrl":
                         content = base64.b64decode(state['value']['bytes']).decode("utf-8")
                 assert(type(index) is int)
-                assert(type(opted_id) is str)
                 assert(type(content) is str)
-                results.append((index, [opted_id, content]))
+                results.append((index, content))
 
             app_results = [{x[0]: x[1]} for x in sorted(results, key= lambda x: x[0])]
             all_app_results[app_info[1]] = app_results
@@ -396,18 +480,16 @@ class Contract():
         with open(os.path.join(self.directory, self.verify_file), "r") as fp:
             contents = json.loads(fp.readline())[input_category]
 
-        local_digest = b""
-        count = 0
+        total_digest = 0
         for content in contents:
             local_hash = SHA256.new()
-            if len(local_digest) > 0:
-                local_hash.update(local_digest)
-            for item in content[str(count)]:
-                local_hash.update(bytes(item, 'utf-8'))
-            count += 1
-            local_digest = local_hash.digest()
+            index = list(content.keys())[0]
+            url = list(content.values())[0]
+            local_hash.update(self.intToBytes(int(index)) + bytes(url, 'utf-8'))
+            local_digest = int(local_hash.hexdigest()[:16], 16)
+            total_digest += local_digest
         
-        return local_digest.hex()
+        return total_digest % (2**64 - 1)
 
     def search_hash(self, user, input_category):
         apps = user.algod_client.account_info(self.account_public_key)['created-apps']
@@ -435,10 +517,20 @@ class Contract():
             global_states = app['application']['params']['global-state']
         else:
             global_states = app['params']['global-state']
-            
+        
+        hash_set = {}
         for state in global_states:
-            if base64.b64decode(state['key']) == b'Hash':
-                online_digest = base64.b64decode(state['value']['bytes'])
-                break
-        return online_digest.hex()
+            if base64.b64decode(state['key']).decode("utf-8") == "Hash1":
+                hash_set[1] = str(state['value']['uint'])
+            # if base64.b64decode(state['key']).decode("utf-8") == "Hash2":
+            #     hash_set[2] = str(state['value']['uint'])
+            # if base64.b64decode(state['key']).decode("utf-8") == "Hash3":
+            #     hash_set[3] = str(state['value']['uint'])
+            # if base64.b64decode(state['key']).decode("utf-8") == "Hash4":
+            #     hash_set[4] = str(state['value']['uint'])
+        hash_onchain = 0
+        hash_set = sorted(hash_set.items(), key = lambda x : x[0])
+        # hash_onchain += int(hash_set[0][1])*(2**192) + int(hash_set[1][1])*(2**128) + int(hash_set[2][1])*(2**64) + int(hash_set[3][1])
+        hash_onchain = int(hash_set[0][1])
+        return hash_onchain
         

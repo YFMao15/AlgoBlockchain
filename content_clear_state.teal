@@ -1,7 +1,75 @@
 #pragma version 2
+byte "Prev"
 int 0
-byte "OptedAppId"
-app_local_del
+byte "Index"
+app_local_get
+itob
+int 0
+byte "AdvertiserUrl"
+app_local_get
+concat
+sha256
+int 0
+int 8
+substring3
+app_global_put
+byte "Hash1"
+app_global_get
+int 0
+byte "Index"
+app_local_get
+itob
+int 0
+byte "AdvertiserUrl"
+app_local_get
+concat
+sha256
+int 0
+int 8
+substring3
+btoi
+>
+bnz l19
+byte "Hash1"
+byte "Hash1"
+app_global_get
+int 0
+byte "Index"
+app_local_get
+itob
+int 0
+byte "AdvertiserUrl"
+app_local_get
+concat
+sha256
+int 0
+int 8
+substring3
+btoi
+~
++
+app_global_put
+b l20
+l19:
+byte "Hash1"
+byte "Hash1"
+app_global_get
+int 0
+byte "Index"
+app_local_get
+itob
+int 0
+byte "AdvertiserUrl"
+app_local_get
+concat
+sha256
+int 0
+int 8
+substring3
+btoi
+-
+app_global_put
+l20:
 int 0
 byte "AdvertiserUrl"
 app_local_del

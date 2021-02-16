@@ -5,7 +5,6 @@ from User import *
 from Advertiser import *
 from Contract import *
 
-
 def send_money(sender, receiver):
     def wait_for_confirmation(algodclient, txid):
         last_round = algodclient.status().get('last-round')
@@ -36,7 +35,7 @@ if __name__ == "__main__":
     """
     init = True
     cate_num = 1
-    adv_num = 10
+    adv_num = 1
 
     if init is True:
         if os.path.exists(os.path.join(os.path.dirname(__file__), "debug.log")):
@@ -96,7 +95,7 @@ if __name__ == "__main__":
     with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
         fp.write("The time cost of opting in " + str(cate_num * adv_num) + " advertisers in each category is: " + str(time.time() - start) + "\n")
     print("Advertiser opting-in complete\n")
-    time.sleep(10)
+    time.sleep(5)
     
     print("Testing searching capability of smart contract...\n")
     search_category = "Category1"
@@ -121,6 +120,6 @@ if __name__ == "__main__":
     with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
         fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")
         
-    print("The locally computed hash value is : " + local_hexdigest)
-    print("The hash value recorded in app is : " + online_hexdigest)
+    print("The locally computed hash value is : " + str(local_hexdigest))
+    print("The hash value recorded in app is : " + str(online_hexdigest))
     assert(local_hexdigest == online_hexdigest)
