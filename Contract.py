@@ -4,6 +4,7 @@ import sys
 import json
 import base64
 import time
+import urllib
 from pyteal import *
 from algosdk import mnemonic
 from algosdk.v2client import algod, indexer
@@ -295,6 +296,7 @@ class Contract():
             txinfo = self.contract_client.pending_transaction_info(txid)
         with open(os.path.join(self.directory, self.log_file), "a+") as fp:
             fp.write("Transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')) + "\n")        
+        return True
 
     def intToBytes(self, integer):
         lower8 = (1 << 8) - 1
@@ -325,15 +327,21 @@ class Contract():
             bytes(input_category, "utf-8"),
         ]
 
-        # create / sign / verify transaction
-        txn = transaction.ApplicationCreateTxn(
-            self.account_public_key, params, on_complete, \
-            self.TEAL_approve_program, self.TEAL_clear_program, \
-            global_schema, local_schema, app_args)
-        signed_txn = txn.sign(self.account_private_key)
-        tx_id = signed_txn.transaction.get_txid()
-        self.contract_client.send_transactions([signed_txn])
-        self.wait_for_confirmation(tx_id)
+        # re-do until the request is received and confirmed
+        received = False
+        while (not received):
+            try:
+                # create / sign / verify transaction
+                txn = transaction.ApplicationCreateTxn(
+                    self.account_public_key, params, on_complete, \
+                    self.TEAL_approve_program, self.TEAL_clear_program, \
+                    global_schema, local_schema, app_args)
+                signed_txn = txn.sign(self.account_private_key)
+                tx_id = signed_txn.transaction.get_txid()
+                self.contract_client.send_transactions([signed_txn])
+                received = self.wait_for_confirmation(tx_id)
+            except:
+                pass
 
         # display results
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
@@ -372,11 +380,16 @@ class Contract():
                 bytes("Url: " + str(opt_in_advertiser.account_public_key), 'utf-8'),
             ]
 
-            txn = transaction.ApplicationOptInTxn(opt_in_advertiser.account_public_key, params, app_id, app_args=app_args)
-            signed_txn = txn.sign(opt_in_advertiser.account_private_key)
-            tx_id = signed_txn.transaction.get_txid()
-            self.contract_client.send_transactions([signed_txn])
-            self.wait_for_confirmation(tx_id)
+            received = False
+            while (not received):
+                try:
+                    txn = transaction.ApplicationOptInTxn(opt_in_advertiser.account_public_key, params, app_id, app_args=app_args)
+                    signed_txn = txn.sign(opt_in_advertiser.account_private_key)
+                    tx_id = signed_txn.transaction.get_txid()
+                    self.contract_client.send_transactions([signed_txn])
+                    received = self.wait_for_confirmation(tx_id)
+                except:
+                    pass
 
             transaction_response = self.contract_client.pending_transaction_info(tx_id)
             with open(os.path.join(self.directory, self.log_file), "a+") as fp:
@@ -413,11 +426,16 @@ class Contract():
                 bytes("New: " + str(update_advertiser.account_public_key), 'utf-8'),
             ]
 
-            txn = transaction.ApplicationNoOpTxn(update_advertiser.account_public_key, params, app_id, app_args=app_args)
-            signed_txn = txn.sign(update_advertiser.account_private_key)
-            tx_id = signed_txn.transaction.get_txid()
-            self.contract_client.send_transactions([signed_txn])
-            self.wait_for_confirmation(tx_id)
+            received = False
+            while (not received):
+                try:
+                    txn = transaction.ApplicationNoOpTxn(update_advertiser.account_public_key, params, app_id, app_args=app_args)
+                    signed_txn = txn.sign(update_advertiser.account_private_key)
+                    tx_id = signed_txn.transaction.get_txid()
+                    self.contract_client.send_transactions([signed_txn])
+                    received = self.wait_for_confirmation(tx_id)
+                except:
+                    pass
 
             transaction_response = self.contract_client.pending_transaction_info(tx_id)
             with open(os.path.join(self.directory, self.log_file), "a+") as fp:
@@ -452,11 +470,16 @@ class Contract():
                 b'Close_Out',
             ]
                 
-            txn = transaction.ApplicationCloseOutTxn(close_out_advertiser.account_public_key, params, app_id, app_args=app_args)
-            signed_txn = txn.sign(close_out_advertiser.account_private_key)
-            tx_id = signed_txn.transaction.get_txid()
-            self.contract_client.send_transactions([signed_txn])
-            self.wait_for_confirmation(tx_id)
+            received = False
+            while (not received):
+                try:
+                    txn = transaction.ApplicationCloseOutTxn(close_out_advertiser.account_public_key, params, app_id, app_args=app_args)
+                    signed_txn = txn.sign(close_out_advertiser.account_private_key)
+                    tx_id = signed_txn.transaction.get_txid()
+                    self.contract_client.send_transactions([signed_txn])
+                    received = self.wait_for_confirmation(tx_id)
+                except:
+                    pass
 
             transaction_response = self.contract_client.pending_transaction_info(tx_id)
             with open(os.path.join(self.directory, self.log_file), "a+") as fp:
@@ -491,11 +514,16 @@ class Contract():
                 b'Clear',
             ]
 
-            txn = transaction.ApplicationClearStateTxn(cleared_advertiser.account_public_key, params, app_id, app_args=app_args)
-            signed_txn = txn.sign(cleared_advertiser.account_private_key)
-            tx_id = signed_txn.transaction.get_txid()
-            self.contract_client.send_transactions([signed_txn])
-            self.wait_for_confirmation(tx_id)
+            received = False
+            while (not received):
+                try:
+                    txn = transaction.ApplicationClearStateTxn(cleared_advertiser.account_public_key, params, app_id, app_args=app_args)
+                    signed_txn = txn.sign(cleared_advertiser.account_private_key)
+                    tx_id = signed_txn.transaction.get_txid()
+                    self.contract_client.send_transactions([signed_txn])
+                    received = self.wait_for_confirmation(tx_id)
+                except:
+                    pass
 
             transaction_response = self.contract_client.pending_transaction_info(tx_id)
             with open(os.path.join(self.directory, self.log_file), "a+") as fp:

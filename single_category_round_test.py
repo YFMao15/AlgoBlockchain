@@ -16,14 +16,20 @@ def send_money(sender, receiver):
             txinfo = algodclient.pending_transaction_info(txid)
         with open(os.path.join(os.path.dirname(__file__), "debug.log"), "a+") as fp:
             fp.write("Money transferring transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')) + "\n")
+        return True
 
     params = sender.algod_client.suggested_params()
     # 20 algorands
     send_amount = 20000000
-
-    txn = transaction.PaymentTxn(sender.account_public_key, params, receiver.account_public_key, send_amount)
-    signed_txn = txn.sign(sender.account_private_key)
-    sender.algod_client.send_transactions([signed_txn])
+    received = False
+    while (not received):
+        try:
+            txn = transaction.PaymentTxn(sender.account_public_key, params, receiver.account_public_key, send_amount)
+            signed_txn = txn.sign(sender.account_private_key)
+            sender.algod_client.send_transactions([signed_txn])
+            received = wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
+        except:
+            pass
     wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
 
 if __name__ == "__main__":

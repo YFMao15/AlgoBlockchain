@@ -34,7 +34,7 @@ app_global_get
 byte "Prev2"
 app_global_get
 >
-bnz l76
+bnz l35
 byte "Hash2"
 byte "Hash2"
 app_global_get
@@ -52,7 +52,7 @@ int 1
 byte "Prev1"
 app_global_get
 >
-bnz l79
+bnz l38
 byte "Hash1"
 byte "Hash1"
 app_global_get
@@ -65,8 +65,8 @@ int 1
 +
 +
 app_global_put
-b l80
-l79:
+b l39
+l38:
 byte "Hash1"
 byte "Hash1"
 app_global_get
@@ -76,9 +76,9 @@ byte "Prev1"
 app_global_get
 -
 app_global_put
-l80:
-b l81
-l76:
+l39:
+b l40
+l35:
 byte "Hash2"
 byte "Hash2"
 app_global_get
@@ -91,7 +91,7 @@ app_global_get
 byte "Prev1"
 app_global_get
 >
-bnz l77
+bnz l36
 byte "Hash1"
 byte "Hash1"
 app_global_get
@@ -102,8 +102,8 @@ int 1
 +
 +
 app_global_put
-b l78
-l77:
+b l37
+l36:
 byte "Hash1"
 byte "Hash1"
 app_global_get
@@ -111,8 +111,8 @@ byte "Prev1"
 app_global_get
 -
 app_global_put
-l78:
-l81:
+l37:
+l40:
 int 0
 byte "Index"
 app_local_del
