@@ -1,6 +1,7 @@
 import os
 import time
 import random
+import argparse
 from User import *
 from Advertiser import *
 from Contract import *
@@ -32,17 +33,13 @@ def send_money(sender, receiver):
             pass
     wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
 
-if __name__ == "__main__":
-    API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC"
+def test_main(init, cate_nums, adv_nums):
+    if cate_nums[0] > 5:
+        API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC"
+    else:
+        API_key = "7iNfo9pqXu4TbDwzzR6oB6yqcnxcpLwm36HdRHTu"
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     index_address = "https://testnet-algorand.api.purestake.io/idx2"
-
-    """
-    CHANGE PARAMS HERE TO LAUNCH DIFFERENT MODE
-    """
-    init = True
-    cate_nums = [2, 4]
-    adv_nums = [3, 5]
 
     for cate_num in cate_nums:
         for adv_num in adv_nums:
@@ -77,21 +74,24 @@ if __name__ == "__main__":
                 contract = Contract(API_key, algod_address, index_address, content_info)
                 contract.create_code()
                 contract.compile_code()
-                contract.init_content_contract(cate_num)
-                #### TESTING ONLY ####
+                contract.init_contract(cate_num)
+                # distinguish the testing results of different params
                 contract.log_file = "debug_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".log"
-                ######################
-                with open(os.path.join(os.path.dirname(__file__), "account.txt"), "w") as fp:
+                with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".txt"), "w") as fp:
                     fp.write(content_info)
+                print("Contract application building complete\n")
             else: 
-                with open(os.path.join(os.path.dirname(__file__), "account.txt"), "r") as fp:
+                with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".txt"), "r") as fp:
                     content_info = fp.readline()
                 contract = Contract(API_key, algod_address, index_address, content_info)
+                contract.log_file = "debug_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".log"
+                # Subtract existed advertisers
+                adv_num -= contract.check_contract(cate_num, adv_num)
                 contract.create_code()
                 contract.compile_code()
+                print("Contract application checking complete\n")
             # print("Contract mneumonic passphrase: ")
             # print(content_info)
-            print("Contract application building complete\n")
 
             print("Adding advertisers...\n")
             adv_list = defaultdict(list)
@@ -190,3 +190,36 @@ if __name__ == "__main__":
                 fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")
                 
             assert(local_hexdigest == online_hexdigest)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Running the round testing of blockchain in cmd mode.')
+    parser.add_argument('-c', '--cate-nums', type=int, nargs='+',
+        help='The number of categories of round test')
+    parser.add_argument('-a', '--adv-nums', type=int, nargs='+',
+        help='The number of advertisers inside one category')
+
+    # args = parser.parse_args(["-c", "1", "2", "3", "-a", "3", "5"])
+    args = parser.parse_args(sys.argv[1:])
+    input_adv_nums = args.adv_nums
+    input_cate_nums = args.cate_nums
+
+    for cate_num in input_cate_nums:
+        init = True
+        cate_nums = [int(cate_num)]
+        adv_nums = [int(input_adv_nums[0])]
+        assert(type(init) is bool)
+        assert(type(cate_nums) is list)
+        assert(type(adv_nums) is list)
+        test_main(init, cate_nums, adv_nums)
+        for idx in range(len(input_adv_nums) - 1):
+            with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_nums[0]) + "_cate_" + str(cate_nums[0]) + ".txt"), "r") as fp:
+                old_passphrase = fp.readline()
+            init = False
+            cate_nums = [int(cate_num)]
+            adv_nums = [int(input_adv_nums[idx + 1])]
+            assert(type(init) is bool)
+            assert(type(cate_nums) is list)
+            assert(type(adv_nums) is list)
+            with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_nums[0]) + "_cate_" + str(cate_nums[0]) + ".txt"), "w") as fp:
+                fp.write(old_passphrase)
+            test_main(init, cate_nums, adv_nums)

@@ -74,13 +74,16 @@ if __name__ == "__main__":
         contract = Contract(API_key, algod_address, index_address, content_info)
         contract.create_code()
         contract.compile_code()
-        contract.init_content_contract(cate_num)
+        contract.init_contract(cate_num)
         with open(os.path.join(os.path.dirname(__file__), "account.txt"), "w") as fp:
             fp.write(content_info)
     else: 
         with open(os.path.join(os.path.dirname(__file__), "account.txt"), "r") as fp:
             content_info = fp.readline()
         contract = Contract(API_key, algod_address, index_address, content_info)
+        contract.log_file = "debug_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".log"
+        # Subtract existed advertisers
+        adv_num -= contract.check_contract(cate_num, adv_num)
         contract.create_code()
         contract.compile_code()
     # print("Contract mneumonic passphrase: ")

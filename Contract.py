@@ -529,7 +529,7 @@ class Contract():
             with open(os.path.join(self.directory, self.log_file), "a+") as fp:
                 fp.write("Cleared app: " + str(transaction_response['txn']['txn']['apid']) + "\n")    
     
-    def init_content_contract(self, category_num):
+    def init_contract(self, category_num):
         with open(os.path.join(self.directory, self.log_file), "a+") as fp:
             fp.write("Start initializing contract application\n")
 
@@ -540,6 +540,28 @@ class Contract():
 
         with open(os.path.join(self.directory, self.log_file), "a+") as fp:
             fp.write("Contract initialized\n")
+    
+    def check_contract(self, category_num, advertiser_num):
+        with open(os.path.join(self.directory, self.log_file), "a+") as fp:
+            fp.write("Checking existed contract application\n")
+
+        apps = self.contract_client.account_info(self.account_public_key)['created-apps']
+        assert(len(apps) == category_num)
+
+        app = apps[0]
+        if 'application' in app:
+            global_states = app['application']['params']['global-state']
+        else:
+            global_states = app['params']['global-state']
+        for state in global_states:
+            if base64.b64decode(state['key']).decode("utf-8") == "Index":
+                existed_advertiser_num = state['value']['uint']
+                break
+        assert(advertiser_num >= existed_advertiser_num)
+
+        with open(os.path.join(self.directory, self.log_file), "a+") as fp:
+            fp.write("Contract confirmed, category number matched\n")
+        return existed_advertiser_num
 
     def full_search(self, user, input_category):
         if input_category not in self.categories:
@@ -568,6 +590,8 @@ class Contract():
         opted_in_accounts = user.indexer_client.accounts(limit=1000, application_id = app_id)['accounts']
         results = []
         for account in opted_in_accounts:
+            if 'key-value' not in account['apps-local-state'][0]:
+                continue
             local_states = account['apps-local-state'][0]['key-value']
             for state in local_states:
                 title = base64.b64decode(state['key']).decode("utf-8")
