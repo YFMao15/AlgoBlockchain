@@ -75,10 +75,11 @@ if __name__ == "__main__":
         contract.create_code()
         contract.compile_code()
         contract.init_contract(cate_num)
-        with open(os.path.join(os.path.dirname(__file__), "account.txt"), "w") as fp:
+        with open(os.path.join(os.path.dirname(__file__), "account_cate_" + str(cate_num) + ".txt"), "w") as fp:
             fp.write(content_info)
+        print("Contract application building complete\n")
     else: 
-        with open(os.path.join(os.path.dirname(__file__), "account.txt"), "r") as fp:
+        with open(os.path.join(os.path.dirname(__file__), "account_cate_" + str(cate_num) + ".txt"), "r") as fp:
             content_info = fp.readline()
         contract = Contract(API_key, algod_address, index_address, content_info)
         contract.log_file = "debug_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".log"

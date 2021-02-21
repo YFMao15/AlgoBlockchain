@@ -74,11 +74,11 @@ def test_main(init, cate_nums, adv_nums):
                 contract.init_contract(cate_num)
                 # distinguish the testing results of different params
                 contract.log_file = "debug_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".log"
-                with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".txt"), "w") as fp:
+                with open(os.path.join(os.path.dirname(__file__), "account_cate_" + str(cate_num) + ".txt"), "w") as fp:
                     fp.write(content_info)
                 print("Contract application building complete\n")
             else: 
-                with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".txt"), "r") as fp:
+                with open(os.path.join(os.path.dirname(__file__), "account_cate_" + str(cate_num) + ".txt"), "r") as fp:
                     content_info = fp.readline()
                 contract = Contract(API_key, algod_address, index_address, content_info)
                 contract.log_file = "debug_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".log"
@@ -199,8 +199,6 @@ if __name__ == "__main__":
     assert(type(cate_nums) is list)
     assert(type(adv_nums) is list)
     test_main(init, cate_nums, adv_nums)
-    with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_nums[0]) + "_cate_" + str(cate_nums[0]) + ".txt"), "r") as fp:
-        old_passphrase = fp.readline()
 
     init = False
     cate_nums = [2]
@@ -208,6 +206,4 @@ if __name__ == "__main__":
     assert(type(init) is bool)
     assert(type(cate_nums) is list)
     assert(type(adv_nums) is list)
-    with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_nums[0]) + "_cate_" + str(cate_nums[0]) + ".txt"), "w") as fp:
-        fp.write(old_passphrase)
     test_main(init, cate_nums, adv_nums)
