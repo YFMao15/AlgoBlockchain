@@ -210,8 +210,8 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--adv-nums', type=int, nargs='+',
         help='The number of advertisers inside one category')
 
-    args = parser.parse_args(["-i", "False", "-c", "1", "2", "3", "-a", "3", "5"])
-    # args = parser.parse_args(sys.argv[1:])
+    # args = parser.parse_args(["-i", "False", "-c", "1", "2", "3", "-a", "3", "5"])
+    args = parser.parse_args(sys.argv[1:])
     input_adv_nums = args.adv_nums
     input_cate_nums = args.cate_nums
     input_init = args.init_mode
