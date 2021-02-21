@@ -192,19 +192,32 @@ def test_main(init, cate_nums, adv_nums):
             assert(local_hexdigest == online_hexdigest)
 
 if __name__ == "__main__":
+    def str2bool(input_cmd):
+        if isinstance(input_cmd, bool):
+            return input_cmd
+        if input_cmd.lower() in ('yes', 'true', 't', 'y', '1'):
+            return True
+        elif input_cmd.lower() in ('no', 'false', 'f', 'n', '0'):
+            return False
+        else:
+            raise argparse.ArgumentTypeError('Boolean value expected.')
+
     parser = argparse.ArgumentParser(description='Running the round testing of blockchain in cmd mode.')
+    parser.add_argument('-i', '--init-mode', type=str2bool,
+        help='The initial mode of round test')
     parser.add_argument('-c', '--cate-nums', type=int, nargs='+',
         help='The number of categories of round test')
     parser.add_argument('-a', '--adv-nums', type=int, nargs='+',
         help='The number of advertisers inside one category')
 
-    # args = parser.parse_args(["-c", "1", "2", "3", "-a", "3", "5"])
-    args = parser.parse_args(sys.argv[1:])
+    args = parser.parse_args(["-i", "False", "-c", "1", "2", "3", "-a", "3", "5"])
+    # args = parser.parse_args(sys.argv[1:])
     input_adv_nums = args.adv_nums
     input_cate_nums = args.cate_nums
+    input_init = args.init_mode
 
     for cate_num in input_cate_nums:
-        init = True
+        init = input_init
         cate_nums = [int(cate_num)]
         adv_nums = [int(input_adv_nums[0])]
         assert(type(init) is bool)
