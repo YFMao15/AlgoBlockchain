@@ -132,34 +132,7 @@ def test_main(init, cate_nums, adv_nums):
             start = time.time()
             online_hexdigest = contract.search_hash(user, "Category1")
             with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-                fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")
-                
-            assert(local_hexdigest == online_hexdigest)
-
-            # close out testing
-            print("Testing closing out capability of smart contract...\n")
-            start = time.time()
-            closed_out_adv = adv_list[search_category][adv_num // 9]
-            contract.close_out_app(closed_out_adv)
-            with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-                fp.write("The time cost of closing out one advertiser in " + search_category + " is: " + str(time.time() - start) + "\n")
-
-            time.sleep(5)
-            start = time.time()
-            contract.create_hash_local_file(user)
-            with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-                fp.write("The time cost of hash local file creation is: " + str(time.time() - start) + "\n")
-
-            start = time.time()
-            local_hexdigest = contract.compute_local_hash(user, "Category1")
-            with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-                fp.write("The time cost of local hash computation " + search_category + " is: " + str(time.time() - start) + "\n")
-
-            start = time.time()
-            online_hexdigest = contract.search_hash(user, "Category1")
-            with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-                fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")
-                
+                fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")   
             assert(local_hexdigest == online_hexdigest)
 
             # update testing
@@ -184,8 +157,32 @@ def test_main(init, cate_nums, adv_nums):
             start = time.time()
             online_hexdigest = contract.search_hash(user, "Category1")
             with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-                fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")
-                
+                fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")           
+            assert(local_hexdigest == online_hexdigest)
+
+            # close out testing
+            print("Testing closing out capability of smart contract...\n")
+            start = time.time()
+            closed_out_adv = adv_list[search_category][adv_num // 9]
+            contract.close_out_app(closed_out_adv)
+            with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+                fp.write("The time cost of closing out one advertiser in " + search_category + " is: " + str(time.time() - start) + "\n")
+
+            time.sleep(5)
+            start = time.time()
+            contract.create_hash_local_file(user)
+            with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+                fp.write("The time cost of hash local file creation is: " + str(time.time() - start) + "\n")
+
+            start = time.time()
+            local_hexdigest = contract.compute_local_hash(user, "Category1")
+            with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+                fp.write("The time cost of local hash computation " + search_category + " is: " + str(time.time() - start) + "\n")
+
+            start = time.time()
+            online_hexdigest = contract.search_hash(user, "Category1")
+            with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+                fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")         
             assert(local_hexdigest == online_hexdigest)
 
 if __name__ == "__main__":

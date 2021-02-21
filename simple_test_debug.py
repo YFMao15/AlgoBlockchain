@@ -138,6 +138,34 @@ if __name__ == "__main__":
     print("The hash value recorded in app is : " + str(hex(online_hexdigest)))
     assert(local_hexdigest == online_hexdigest)
 
+    # update testing
+    print("Testing updating capability of smart contract...\n")
+    start = time.time()
+    updated_adv = adv_list[search_category][0]
+    contract.update_app(updated_adv)
+    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+        fp.write("The time cost of updating one advertiser in " + search_category + " is: " + str(time.time() - start) + "\n")
+
+    time.sleep(5)
+    start = time.time()
+    contract.create_hash_local_file(user)
+    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+        fp.write("The time cost of hash local file creation is: " + str(time.time() - start) + "\n")
+
+    start = time.time()
+    local_hexdigest = contract.compute_local_hash(user, "Category1")
+    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+        fp.write("The time cost of local hash computation " + search_category + " is: " + str(time.time() - start) + "\n")
+
+    start = time.time()
+    online_hexdigest = contract.search_hash(user, "Category1")
+    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+        fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")
+        
+    print("The locally computed hash value is : " + str(hex(local_hexdigest)))
+    print("The hash value recorded in app is : " + str(hex(online_hexdigest)))
+    assert(local_hexdigest == online_hexdigest)
+
     # close out testing
     print("Testing closing out capability of smart contract...\n")
     start = time.time()
@@ -166,30 +194,4 @@ if __name__ == "__main__":
     print("The hash value recorded in app is : " + str(hex(online_hexdigest)))
     assert(local_hexdigest == online_hexdigest)
 
-    # update testing
-    print("Testing updating capability of smart contract...\n")
-    start = time.time()
-    updated_adv = adv_list[search_category][0]
-    contract.update_app(updated_adv)
-    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-        fp.write("The time cost of updating one advertiser in " + search_category + " is: " + str(time.time() - start) + "\n")
-
-    time.sleep(5)
-    start = time.time()
-    contract.create_hash_local_file(user)
-    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-        fp.write("The time cost of hash local file creation is: " + str(time.time() - start) + "\n")
-
-    start = time.time()
-    local_hexdigest = contract.compute_local_hash(user, "Category1")
-    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-        fp.write("The time cost of local hash computation " + search_category + " is: " + str(time.time() - start) + "\n")
-
-    start = time.time()
-    online_hexdigest = contract.search_hash(user, "Category1")
-    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-        fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")
-        
-    print("The locally computed hash value is : " + str(hex(local_hexdigest)))
-    print("The hash value recorded in app is : " + str(hex(online_hexdigest)))
-    assert(local_hexdigest == online_hexdigest)
+    

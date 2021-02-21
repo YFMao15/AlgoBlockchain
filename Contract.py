@@ -59,13 +59,11 @@ class Contract():
         create_content = Seq([
             App.globalPut(Bytes("Index"), Int(0)),
             App.globalPut(Bytes("Category"), Txn.application_args[1]),
-            # 1-4: from MSB to LSB
+            # 1-2: from MSB to LSB
             # value of large number in decimal: 
-            # Hash1 * 2**192 + Hash2 * 2**128 + Hash3 * 2**64 + Hash4
+            # Hash3 * 2**64 + Hash4
             App.globalPut(Bytes("Hash1"), Int(0)),
             App.globalPut(Bytes("Hash2"), Int(0)),
-            # App.globalPut(Bytes("Hash3"), Btoi(Substring(init_hash, Int(16), Int(24)))),
-            # App.globalPut(Bytes("Hash4"), Btoi(Substring(init_hash, Int(24), Int(32)))),
             Return(Int(1))
         ])
 
