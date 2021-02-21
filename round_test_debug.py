@@ -139,7 +139,7 @@ def test_main(init, cate_nums, adv_nums):
             # close out testing
             print("Testing closing out capability of smart contract...\n")
             start = time.time()
-            closed_out_adv = adv_list[search_category][adv_num // 2]
+            closed_out_adv = adv_list[search_category][adv_num // 9]
             contract.close_out_app(closed_out_adv)
             with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
                 fp.write("The time cost of closing out one advertiser in " + search_category + " is: " + str(time.time() - start) + "\n")
@@ -165,7 +165,7 @@ def test_main(init, cate_nums, adv_nums):
             # update testing
             print("Testing updating capability of smart contract...\n")
             start = time.time()
-            updated_adv = adv_list[search_category][0]
+            updated_adv = adv_list[search_category][adv_num // 3]
             contract.update_app(updated_adv)
             with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
                 fp.write("The time cost of updating one advertiser in " + search_category + " is: " + str(time.time() - start) + "\n")

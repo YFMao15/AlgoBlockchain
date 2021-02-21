@@ -34,10 +34,12 @@ def send_money(sender, receiver):
     wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
 
 def test_main(init, cate_nums, adv_nums):
-    if cate_nums[0] > 5:
+    if cate_nums[0] >= 10:
         API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC"
-    else:
+    elif (cate_nums[0] <= 8) and (cate_nums[0] >= 6):
         API_key = "7iNfo9pqXu4TbDwzzR6oB6yqcnxcpLwm36HdRHTu"
+    else:
+        API_key = "CdYVr07ErYa3VNessIks1aPcmlRYPjfZ34KYF7TF"
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     index_address = "https://testnet-algorand.api.purestake.io/idx2"
 
@@ -142,7 +144,7 @@ def test_main(init, cate_nums, adv_nums):
             # close out testing
             print("Testing closing out capability of smart contract...\n")
             start = time.time()
-            closed_out_adv = adv_list[search_category][adv_num // 2]
+            closed_out_adv = adv_list[search_category][adv_num // 9]
             contract.close_out_app(closed_out_adv)
             with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
                 fp.write("The time cost of closing out one advertiser in " + search_category + " is: " + str(time.time() - start) + "\n")
@@ -168,7 +170,7 @@ def test_main(init, cate_nums, adv_nums):
             # update testing
             print("Testing updating capability of smart contract...\n")
             start = time.time()
-            updated_adv = adv_list[search_category][0]
+            updated_adv = adv_list[search_category][adv_num // 3]
             contract.update_app(updated_adv)
             with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
                 fp.write("The time cost of updating one advertiser in " + search_category + " is: " + str(time.time() - start) + "\n")
