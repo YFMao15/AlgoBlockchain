@@ -33,12 +33,12 @@ def send_money(sender, receiver):
             pass
     wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
 
-def test_main(init, cate_nums, adv_nums):
-    if cate_nums[0] >= 10:
+def test_main(init, cate_nums, adv_nums, key):
+    if int(key) == 1:
         API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC"
-    elif (cate_nums[0] <= 8) and (cate_nums[0] >= 6):
+    elif int(key) == 2:
         API_key = "7iNfo9pqXu4TbDwzzR6oB6yqcnxcpLwm36HdRHTu"
-    else:
+    elif int(key) == 3:
         API_key = "CdYVr07ErYa3VNessIks1aPcmlRYPjfZ34KYF7TF"
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     index_address = "https://testnet-algorand.api.purestake.io/idx2"
@@ -190,7 +190,6 @@ def test_main(init, cate_nums, adv_nums):
                 fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")               
             assert(local_hexdigest == online_hexdigest)
 
-            
 
 if __name__ == "__main__":
     def str2bool(input_cmd):
@@ -210,12 +209,15 @@ if __name__ == "__main__":
         help='The number of categories of round test')
     parser.add_argument('-a', '--adv-nums', type=int, nargs='+',
         help='The number of advertisers inside one category')
+    parser.add_argument('-k', '--key', type=int,
+        help='The index of key selected')
 
     # args = parser.parse_args(["-i", "False", "-c", "1", "2", "3", "-a", "3", "5"])
     args = parser.parse_args(sys.argv[1:])
     input_adv_nums = args.adv_nums
     input_cate_nums = args.cate_nums
     input_init = args.init_mode
+    key = args.key
 
     for cate_num in input_cate_nums:
         init = input_init
@@ -224,7 +226,7 @@ if __name__ == "__main__":
         assert(type(init) is bool)
         assert(type(cate_nums) is list)
         assert(type(adv_nums) is list)
-        test_main(init, cate_nums, adv_nums)
+        test_main(init, cate_nums, adv_nums, key)
         for idx in range(len(input_adv_nums) - 1):
             init = False
             cate_nums = [int(cate_num)]
@@ -232,4 +234,4 @@ if __name__ == "__main__":
             assert(type(init) is bool)
             assert(type(cate_nums) is list)
             assert(type(adv_nums) is list)
-            test_main(init, cate_nums, adv_nums)
+            test_main(init, cate_nums, adv_nums, key)

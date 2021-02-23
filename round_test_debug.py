@@ -33,7 +33,6 @@ def send_money(sender, receiver):
     wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
 
 def test_main(init, cate_nums, adv_nums):
-    # API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC"
     API_key = "7iNfo9pqXu4TbDwzzR6oB6yqcnxcpLwm36HdRHTu"
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     index_address = "https://testnet-algorand.api.purestake.io/idx2"
