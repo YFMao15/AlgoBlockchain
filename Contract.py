@@ -585,7 +585,7 @@ class Contract():
         assert(type(app_id) is int)
         assert(matched is True)
 
-        opted_in_accounts = user.indexer_client.accounts(limit=1000, application_id = app_id)['accounts']
+        opted_in_accounts = user.indexer_client.accounts(limit=10000, application_id = app_id)['accounts']
         results = []
         for account in opted_in_accounts:
             if 'key-value' not in account['apps-local-state'][0]:
@@ -620,7 +620,7 @@ class Contract():
                     apps_info.append((app['id'], base64.b64decode(state['value']['bytes']).decode("utf-8")))
             
         for app_info in apps_info:
-            opted_in_accounts = user.indexer_client.accounts(limit=1000, application_id = app_info[0])['accounts']
+            opted_in_accounts = user.indexer_client.accounts(limit=10000, application_id = app_info[0])['accounts']
             results = []
             for account in opted_in_accounts:
                 if 'key-value' not in account['apps-local-state'][0]:

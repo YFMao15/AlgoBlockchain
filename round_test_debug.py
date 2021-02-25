@@ -33,7 +33,7 @@ def send_money(sender, receiver):
     wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
 
 def test_main(init, cate_nums, adv_nums):
-    API_key = "7iNfo9pqXu4TbDwzzR6oB6yqcnxcpLwm36HdRHTu"
+    API_key = "CdYVr07ErYa3VNessIks1aPcmlRYPjfZ34KYF7TF"
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     index_address = "https://testnet-algorand.api.purestake.io/idx2"
 
@@ -189,16 +189,16 @@ if __name__ == "__main__":
     CHANGE PARAMS HERE TO LAUNCH DIFFERENT MODE
     """
     init = True
-    cate_nums = [2]
-    adv_nums = [5]
+    cate_nums = [1]
+    adv_nums = [1000]
     assert(type(init) is bool)
     assert(type(cate_nums) is list)
     assert(type(adv_nums) is list)
     test_main(init, cate_nums, adv_nums)
 
     init = False
-    cate_nums = [2]
-    adv_nums = [10]
+    cate_nums = [1]
+    adv_nums = [1001]
     assert(type(init) is bool)
     assert(type(cate_nums) is list)
     assert(type(adv_nums) is list)
