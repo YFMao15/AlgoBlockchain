@@ -6,7 +6,7 @@ from Advertiser import *
 from Contract import *
 from collections import defaultdict
 
-def send_money(sender, receiver):
+def send_money(sender, receiver, send_amount):
     def wait_for_confirmation(algodclient, txid):
         last_round = algodclient.status().get('last-round')
         txinfo = algodclient.pending_transaction_info(txid)
@@ -19,8 +19,6 @@ def send_money(sender, receiver):
         return True
 
     params = sender.algod_client.suggested_params()
-    # 20 algorands
-    send_amount = 20000000
     received = False
     while (not received):
         try:
@@ -66,7 +64,7 @@ def test_main(init, cate_nums, adv_nums):
                 content_info = mnemonic.from_private_key(account.generate_account()[0])
                 temp = Advertiser(API_key, algod_address, index_address, content_info)
                 temp.login()
-                send_money(banker, temp)
+                send_money(banker, temp, 15000000)
                 contract = Contract(API_key, algod_address, index_address, content_info)
                 contract.create_code()
                 contract.compile_code()
@@ -100,7 +98,7 @@ def test_main(init, cate_nums, adv_nums):
                     input_categories.append("Category" + str(count))
                     adv_list["Category" + str(count)].append(adv)
                 adv.assign_category(input_categories)
-                send_money(banker, adv)
+                send_money(banker, adv, 11000000)
                 if x == adv_num - 1:
                     start = time.time()
                 contract.opt_in_app(adv) 
@@ -184,13 +182,23 @@ def test_main(init, cate_nums, adv_nums):
                 fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")         
             assert(local_hexdigest == online_hexdigest)
 
+            # Return money to banker account, saving the balance in our testing account
+            for category in adv_list:
+                for x in range(adv_num):
+                    adv = adv_list[category][x]
+                    send_money(adv, banker, 1090000)
+            with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+                fp.write("Money returned from advertisers to banker account for reusing \n")
+
+            
+
 if __name__ == "__main__":
     """
     CHANGE PARAMS HERE TO LAUNCH DIFFERENT MODE
     """
     init = True
     cate_nums = [1]
-    adv_nums = [1000]
+    adv_nums = [2]
     assert(type(init) is bool)
     assert(type(cate_nums) is list)
     assert(type(adv_nums) is list)
@@ -198,7 +206,7 @@ if __name__ == "__main__":
 
     init = False
     cate_nums = [1]
-    adv_nums = [1001]
+    adv_nums = [3]
     assert(type(init) is bool)
     assert(type(cate_nums) is list)
     assert(type(adv_nums) is list)

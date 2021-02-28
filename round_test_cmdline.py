@@ -7,7 +7,7 @@ from Advertiser import *
 from Contract import *
 from collections import defaultdict
 
-def send_money(sender, receiver):
+def send_money(sender, receiver, send_amount):
     def wait_for_confirmation(algodclient, txid):
         last_round = algodclient.status().get('last-round')
         txinfo = algodclient.pending_transaction_info(txid)
@@ -20,8 +20,6 @@ def send_money(sender, receiver):
         return True
 
     params = sender.algod_client.suggested_params()
-    # 20 algorands
-    send_amount = 20000000
     received = False
     while (not received):
         try:
@@ -33,7 +31,7 @@ def send_money(sender, receiver):
             pass
     wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
 
-def test_main(init, cate_nums, adv_nums, key):
+def test_main(init, cate_nums, adv_nums, key, thrifty_mode):
     if int(key) == 1:
         API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC"
     elif int(key) == 2:
@@ -72,7 +70,7 @@ def test_main(init, cate_nums, adv_nums, key):
                 content_info = mnemonic.from_private_key(account.generate_account()[0])
                 temp = Advertiser(API_key, algod_address, index_address, content_info)
                 temp.login()
-                send_money(banker, temp)
+                send_money(banker, temp, 15000000)
                 contract = Contract(API_key, algod_address, index_address, content_info)
                 contract.create_code()
                 contract.compile_code()
@@ -106,7 +104,7 @@ def test_main(init, cate_nums, adv_nums, key):
                     input_categories.append("Category" + str(count))
                     adv_list["Category" + str(count)].append(adv)
                 adv.assign_category(input_categories)
-                send_money(banker, adv)
+                send_money(banker, adv, 11000000)
                 if x == adv_num - 1:
                     start = time.time()
                 contract.opt_in_app(adv) 
@@ -190,6 +188,15 @@ def test_main(init, cate_nums, adv_nums, key):
                 fp.write("The time cost of on-chain hash searching " + search_category + " is: " + str(time.time() - start) + "\n")               
             assert(local_hexdigest == online_hexdigest)
 
+            # Return money to banker account, saving the balance in our testing account
+            if thrifty_mode is True:
+                for category in adv_list:
+                    for x in range(adv_num):
+                        adv = adv_list[category][x]
+                        send_money(adv, banker, 1090000)
+                with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+                    fp.write("Money returned from advertisers to banker account for reusing \n")
+
 
 if __name__ == "__main__":
     def str2bool(input_cmd):
@@ -211,6 +218,8 @@ if __name__ == "__main__":
         help='The number of advertisers inside one category')
     parser.add_argument('-k', '--key', type=int,
         help='The index of key selected')
+    parser.add_argument('-t', "--thrifty-mode", type=str2bool,
+        help='The decision to transferring balance back to banker account for reuse')
 
     # args = parser.parse_args(["-i", "False", "-c", "1", "2", "3", "-a", "3", "5"])
     args = parser.parse_args(sys.argv[1:])
@@ -218,20 +227,32 @@ if __name__ == "__main__":
     input_cate_nums = args.cate_nums
     input_init = args.init_mode
     key = args.key
+    thrifty_mode = args.thrifty_mode
 
     for cate_num in input_cate_nums:
         init = input_init
         cate_nums = [int(cate_num)]
         adv_nums = [int(input_adv_nums[0])]
+
         assert(type(init) is bool)
         assert(type(cate_nums) is list)
         assert(type(adv_nums) is list)
-        test_main(init, cate_nums, adv_nums, key)
+        assert(int(key) <= 3)
+        assert(int(key) >= 1)
+        assert(type(thrifty_mode) is bool)
+
+        test_main(init, cate_nums, adv_nums, key, thrifty_mode)
+        
         for idx in range(len(input_adv_nums) - 1):
             init = False
             cate_nums = [int(cate_num)]
             adv_nums = [int(input_adv_nums[idx + 1])]
+
             assert(type(init) is bool)
             assert(type(cate_nums) is list)
             assert(type(adv_nums) is list)
-            test_main(init, cate_nums, adv_nums, key)
+            assert(int(key) <= 3)
+            assert(int(key) >= 1)
+            assert(type(thrifty_mode) is bool)
+
+            test_main(init, cate_nums, adv_nums, key, thrifty_mode)

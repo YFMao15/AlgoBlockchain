@@ -2,21 +2,21 @@
 txn ApplicationID
 int 0
 ==
-bnz l0
+bnz l41
 txn OnCompletion
 int OptIn
 ==
-bnz l1
+bnz l42
 txn OnCompletion
 int CloseOut
 ==
-bnz l2
+bnz l43
 txn OnCompletion
 int NoOp
 ==
-bnz l3
+bnz l44
 err
-l0:
+l41:
 byte "Index"
 int 0
 app_global_put
@@ -31,17 +31,17 @@ int 0
 app_global_put
 int 1
 return
-b l4
-l1:
+b l45
+l42:
 txna ApplicationArgs 1
 byte "Category"
 app_global_get
 ==
-bnz l5
+bnz l46
 int 0
 return
-b l12
-l5:
+b l53
+l46:
 byte "Index"
 byte "Index"
 app_global_get
@@ -81,7 +81,7 @@ app_global_get
 byte "Hash2"
 app_global_get
 >
-bnz l6
+bnz l47
 byte "Hash2"
 int 18446744073709551614
 byte "Temp2"
@@ -101,7 +101,7 @@ app_global_get
 int 1
 +
 >
-bnz l9
+bnz l50
 byte "Hash1"
 int 18446744073709551614
 byte "Temp1"
@@ -115,8 +115,8 @@ int 1
 +
 -
 app_global_put
-b l10
-l9:
+b l51
+l50:
 byte "Hash1"
 byte "Temp1"
 app_global_get
@@ -126,9 +126,9 @@ int 1
 +
 +
 app_global_put
-l10:
-b l11
-l6:
+l51:
+b l52
+l47:
 byte "Hash2"
 byte "Temp2"
 app_global_get
@@ -142,7 +142,7 @@ app_global_get
 byte "Hash1"
 app_global_get
 >
-bnz l7
+bnz l48
 byte "Hash1"
 int 18446744073709551614
 byte "Temp1"
@@ -154,8 +154,8 @@ app_global_get
 +
 -
 app_global_put
-b l8
-l7:
+b l49
+l48:
 byte "Hash1"
 byte "Temp1"
 app_global_get
@@ -163,8 +163,8 @@ byte "Hash1"
 app_global_get
 +
 app_global_put
-l8:
-l11:
+l49:
+l52:
 int 0
 byte "Index"
 byte "Index"
@@ -182,17 +182,17 @@ byte "Temp2"
 app_global_del
 int 1
 return
-l12:
-b l4
-l2:
+l53:
+b l45
+l43:
 int 0
 global CurrentApplicationID
 app_opted_in
-bnz l13
+bnz l54
 int 0
 return
-b l20
-l13:
+b l61
+l54:
 byte "Prev"
 int 0
 byte "Index"
@@ -228,7 +228,7 @@ app_global_get
 byte "Prev2"
 app_global_get
 >
-bnz l14
+bnz l55
 byte "Hash2"
 byte "Hash2"
 app_global_get
@@ -246,7 +246,7 @@ int 1
 byte "Prev1"
 app_global_get
 >
-bnz l17
+bnz l58
 byte "Hash1"
 byte "Hash1"
 app_global_get
@@ -259,8 +259,8 @@ int 1
 +
 +
 app_global_put
-b l18
-l17:
+b l59
+l58:
 byte "Hash1"
 byte "Hash1"
 app_global_get
@@ -270,9 +270,9 @@ byte "Prev1"
 app_global_get
 -
 app_global_put
-l18:
-b l19
-l14:
+l59:
+b l60
+l55:
 byte "Hash2"
 byte "Hash2"
 app_global_get
@@ -285,7 +285,7 @@ app_global_get
 byte "Prev1"
 app_global_get
 >
-bnz l15
+bnz l56
 byte "Hash1"
 byte "Hash1"
 app_global_get
@@ -296,8 +296,8 @@ int 1
 +
 +
 app_global_put
-b l16
-l15:
+b l57
+l56:
 byte "Hash1"
 byte "Hash1"
 app_global_get
@@ -305,8 +305,8 @@ byte "Prev1"
 app_global_get
 -
 app_global_put
-l16:
-l19:
+l57:
+l60:
 int 0
 byte "Index"
 app_local_del
@@ -321,17 +321,17 @@ byte "Prev2"
 app_global_del
 int 1
 return
-l20:
-b l4
-l3:
+l61:
+b l45
+l44:
 int 0
 global CurrentApplicationID
 app_opted_in
-bnz l21
+bnz l62
 int 0
 return
-b l34
-l21:
+b l75
+l62:
 byte "Prev"
 int 0
 byte "Index"
@@ -367,7 +367,7 @@ app_global_get
 byte "Prev2"
 app_global_get
 >
-bnz l22
+bnz l63
 byte "Hash2"
 byte "Hash2"
 app_global_get
@@ -385,7 +385,7 @@ int 1
 byte "Prev1"
 app_global_get
 >
-bnz l25
+bnz l66
 byte "Hash1"
 byte "Hash1"
 app_global_get
@@ -398,8 +398,8 @@ int 1
 +
 +
 app_global_put
-b l26
-l25:
+b l67
+l66:
 byte "Hash1"
 byte "Hash1"
 app_global_get
@@ -409,9 +409,9 @@ byte "Prev1"
 app_global_get
 -
 app_global_put
-l26:
-b l27
-l22:
+l67:
+b l68
+l63:
 byte "Hash2"
 byte "Hash2"
 app_global_get
@@ -424,7 +424,7 @@ app_global_get
 byte "Prev1"
 app_global_get
 >
-bnz l23
+bnz l64
 byte "Hash1"
 byte "Hash1"
 app_global_get
@@ -435,8 +435,8 @@ int 1
 +
 +
 app_global_put
-b l24
-l23:
+b l65
+l64:
 byte "Hash1"
 byte "Hash1"
 app_global_get
@@ -444,8 +444,8 @@ byte "Prev1"
 app_global_get
 -
 app_global_put
-l24:
-l27:
+l65:
+l68:
 byte "Prev"
 app_global_del
 byte "Prev1"
@@ -489,7 +489,7 @@ app_global_get
 byte "Hash2"
 app_global_get
 >
-bnz l28
+bnz l69
 byte "Hash2"
 int 18446744073709551614
 byte "Temp2"
@@ -509,7 +509,7 @@ app_global_get
 int 1
 +
 >
-bnz l31
+bnz l72
 byte "Hash1"
 int 18446744073709551614
 byte "Temp1"
@@ -523,8 +523,8 @@ int 1
 +
 -
 app_global_put
-b l32
-l31:
+b l73
+l72:
 byte "Hash1"
 byte "Temp1"
 app_global_get
@@ -534,9 +534,9 @@ int 1
 +
 +
 app_global_put
-l32:
-b l33
-l28:
+l73:
+b l74
+l69:
 byte "Hash2"
 byte "Temp2"
 app_global_get
@@ -550,7 +550,7 @@ app_global_get
 byte "Hash1"
 app_global_get
 >
-bnz l29
+bnz l70
 byte "Hash1"
 int 18446744073709551614
 byte "Temp1"
@@ -562,8 +562,8 @@ app_global_get
 +
 -
 app_global_put
-b l30
-l29:
+b l71
+l70:
 byte "Hash1"
 byte "Temp1"
 app_global_get
@@ -571,8 +571,8 @@ byte "Hash1"
 app_global_get
 +
 app_global_put
-l30:
-l33:
+l71:
+l74:
 int 0
 byte "AdvertiserUrl"
 txna ApplicationArgs 2
@@ -585,5 +585,5 @@ byte "Temp2"
 app_global_del
 int 1
 return
-l34:
-l4:
+l75:
+l45:
