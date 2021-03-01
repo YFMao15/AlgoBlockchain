@@ -196,6 +196,6 @@ if __name__ == "__main__":
     for category in adv_list:
         for x in range(adv_num):
             adv = adv_list[category][x]
-            send_money(adv, banker, 1090000)
+            send_money(adv, banker, 10900000)
     with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
         fp.write("Money returned from advertisers to banker account for reusing \n")
