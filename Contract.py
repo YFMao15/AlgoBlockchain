@@ -575,12 +575,12 @@ class Contract():
         with open(os.path.join(self.directory, self.log_file), "a+") as fp:
             fp.write("Contract initialized\n")
     
-    def check_contract(self, category_num, advertiser_nums):
+    def check_contract(self, category, advertiser_num):
         with open(os.path.join(self.directory, self.log_file), "a+") as fp:
             fp.write("Checking existed contract application\n")
 
         apps = self.contract_client.account_info(self.account_public_key)['created-apps']
-        assert(len(apps) == category_num)
+        assert(len(apps) == category)
 
         app = apps[0]
         if 'application' in app:
@@ -592,9 +592,6 @@ class Contract():
                 existed_advertiser_num = state['value']['uint']
                 break
         assert(advertiser_num >= existed_advertiser_num)
-
-        with open(os.path.join(self.directory, self.log_file), "a+") as fp:
-            fp.write("Contract confirmed, category number matched\n")
         return existed_advertiser_num
 
     def full_search(self, user, input_category):
@@ -671,7 +668,7 @@ class Contract():
                         key_order = int(base64.b64decode(state['key']).decode("utf-8")[5:])
                         content.append((key_order, base64.b64decode(state['value']['bytes']).decode("utf-8")))
                 assert(type(index) is int)
-                assert(len(content) is 12)
+                assert(len(content) == 12)
                 output  = ""
                 for share in sorted(content, key=lambda x:x[0]):
                     output += share[1]

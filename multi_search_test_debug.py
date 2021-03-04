@@ -1,10 +1,8 @@
 import os
 import time
-import random
 from User import *
 from Advertiser import *
 from Contract import *
-from collections import defaultdict
 
 def send_money(sender, receiver, send_amount):
     def wait_for_confirmation(algodclient, txid):
@@ -30,16 +28,13 @@ def send_money(sender, receiver, send_amount):
             pass
     wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
 
-def test_main(cate_num):
+def test_main(cate_num, adv_num):
     API_key = "CdYVr07ErYa3VNessIks1aPcmlRYPjfZ34KYF7TF"
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     index_address = "https://testnet-algorand.api.purestake.io/idx2"
 
     if os.path.exists(os.path.join(os.path.dirname(__file__), "debug.log")):
         os.remove(os.path.join(os.path.dirname(__file__), "debug.log"))
-    if os.path.exists(os.path.join(os.path.dirname(__file__), "account.txt")):
-        os.remove(os.path.join(os.path.dirname(__file__), "account.txt"))
-
     if os.path.exists(os.path.join(os.path.dirname(__file__), "verify.log")):
         os.remove(os.path.join(os.path.dirname(__file__), "verify.log"))
     if os.path.exists(os.path.join(os.path.dirname(__file__), "search.log")):
@@ -56,22 +51,24 @@ def test_main(cate_num):
         passphrase = "code thrive mouse code badge example pride stereo sell viable adjust planet text close erupt embrace nature upon february weekend humble surprise shrug absorb faint")
     banker.login()
 
-    print("Building contract app...\n")
-    with open(os.path.join(os.path.dirname(__file__), "account_cate_" + str(cate_num) + ".txt"), "r") as fp:
+    print("Reading existed contract app...\n")
+    with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".txt"), "r") as fp:
         content_info = fp.readline()
     contract = Contract(API_key, algod_address, index_address, content_info)
-    contract.log_file = "debug_search_cate_" + str(cate_num) + ".log"
+    contract.log_file = "test_search_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".log"
     contract.create_code()
     contract.compile_code()
     print("Contract application checking complete\n")
+    # print("Contract mneumonic passphrase: ")
+    # print(content_info)
 
     # search & online hash testing
     for idx in range(1, cate_num + 1):
         full_serach_time = 0.
         local_hash_time = 0.
         hash_search_time = 0.
+        print("Testing searching capability of smart contract of " + str(idx) + " categories...\n")
         for target in range(1, idx + 1):
-            print("Testing searching capability of smart contract...\n")
             search_category = "Category" + str(target)
             start = time.time()
             contract.full_search(user, search_category)
@@ -101,5 +98,7 @@ if __name__ == "__main__":
     CHANGE PARAMS HERE TO LAUNCH DIFFERENT MODE
     """
     cate_num = 2
+    adv_num = 20
     assert(type(cate_num) is int)
-    test_main(cate_num)
+    assert(type(adv_num) is int)
+    test_main(cate_num, adv_num)
