@@ -91,6 +91,7 @@ def test_main(init, set_num, cate_num, adv_nums):
                 adv_list["Category" + str(idx + 1)].append(adv)
                 adv.assign_category(input_categories)
                 send_money(banker, adv, 11000000)
+                time.sleep(3)
                 contract.opt_in_app(adv) 
                 time.sleep(3)
         print("Advertiser opting-in complete\n")

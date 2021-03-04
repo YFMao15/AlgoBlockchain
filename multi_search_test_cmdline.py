@@ -31,7 +31,7 @@ def send_money(sender, receiver, send_amount):
             pass
     wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
 
-def test_main(cate_num, key):
+def test_main(cate_num, key, round_num):
     if int(key) == 1:
         API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC"
     elif int(key) == 2:
@@ -66,7 +66,7 @@ def test_main(cate_num, key):
     with open(os.path.join(os.path.dirname(__file__), "account_cate_" + str(cate_num) + ".txt"), "r") as fp:
         content_info = fp.readline()
     contract = Contract(API_key, algod_address, index_address, content_info)
-    contract.log_file = "debug_search_cate_" + str(cate_num) + ".log"
+    contract.log_file = "debug_search_" + str(round_num) + "_cate_" + str(cate_num) + ".log"
     contract.create_code()
     contract.compile_code()
     print("Contract application checking complete\n")
@@ -118,4 +118,5 @@ if __name__ == "__main__":
     key = args.key
     assert(type(cate_num) is int)
     assert(type(key) is int)
-    test_main(cate_num, key)
+    for x in range(5):
+        test_main(cate_num, key, x)
