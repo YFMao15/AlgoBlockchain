@@ -91,11 +91,11 @@ def test_main(cate_num, adv_num, key):
             contract.create_hash_local_file(user)
         
             start = time.time()
-            local_hexdigest = contract.compute_local_hash(user, "Category1")  
+            local_hexdigest = contract.compute_local_hash(user, search_category)  
             local_hash_time += (time.time() - start)
 
             start = time.time()
-            online_hexdigest = contract.search_hash(user, "Category1") 
+            online_hexdigest = contract.search_hash(user, search_category) 
             hash_search_time += (time.time() - start)
             assert(local_hexdigest == online_hexdigest)
             time.sleep(3)

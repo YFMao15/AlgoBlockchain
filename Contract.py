@@ -580,14 +580,25 @@ class Contract():
             fp.write("Checking existed contract application\n")
 
         apps = self.contract_client.account_info(self.account_public_key)['created-apps']
-        assert(len(apps) == category)
-
-        app = apps[0]
+        app_found = False
+        for app in apps:
+            if 'application' in app:
+                global_states = app['application']['params']['global-state']
+            else:
+                global_states = app['params']['global-state']
+            for state in global_states:
+                if base64.b64decode(state['key']).decode("utf-8") == "Category":
+                    if base64.b64decode(state['value']['bytes']).decode("utf-8") == category:
+                        app_found = True
+                        break
+            if app_found is True:
+                break
+                
         if 'application' in app:
             global_states = app['application']['params']['global-state']
         else:
             global_states = app['params']['global-state']
-        for state in global_states:
+        for state in global_states:        
             if base64.b64decode(state['key']).decode("utf-8") == "Index":
                 existed_advertiser_num = state['value']['uint']
                 break

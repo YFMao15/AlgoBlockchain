@@ -78,11 +78,11 @@ def test_main(cate_num, adv_num):
             contract.create_hash_local_file(user)
         
             start = time.time()
-            local_hexdigest = contract.compute_local_hash(user, "Category1")  
+            local_hexdigest = contract.compute_local_hash(user, search_category)  
             local_hash_time += (time.time() - start)
 
             start = time.time()
-            online_hexdigest = contract.search_hash(user, "Category1") 
+            online_hexdigest = contract.search_hash(user, search_category) 
             hash_search_time += (time.time() - start)
             assert(local_hexdigest == online_hexdigest)
             time.sleep(3)
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     CHANGE PARAMS HERE TO LAUNCH DIFFERENT MODE
     """
     cate_num = 2
-    adv_num = 20
+    adv_num = 2
     assert(type(cate_num) is int)
     assert(type(adv_num) is int)
     test_main(cate_num, adv_num)

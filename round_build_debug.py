@@ -108,9 +108,9 @@ if __name__ == "__main__":
     """
     CHANGE PARAMS HERE TO LAUNCH DIFFERENT MODE
     """
-    init = True
+    init = False
     cate_num = 2
-    adv_num = 2
+    adv_num = 20
     assert(type(init) is bool)
     assert(type(cate_num) is int)
     assert(type(adv_num) is int)
