@@ -68,7 +68,8 @@ def build_main(init, cate_num, adv_num):
         contract = Contract(API_key, algod_address, index_address, content_info)
         # Subtract existed advertisers
         for x in range(cate_num):
-            building_adv_nums[x] -= contract.check_contract(cate_num, adv_num)
+            cate = "Category" + str(x + 1)
+            building_adv_nums[x] -= contract.check_contract(cate, adv_num)
             assert(building_adv_nums[x] >= 0)
         contract.create_code()
         contract.compile_code()

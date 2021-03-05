@@ -600,7 +600,7 @@ class Contract():
             global_states = app['params']['global-state']
         for state in global_states:        
             if base64.b64decode(state['key']).decode("utf-8") == "Index":
-                existed_advertiser_num = state['value']['uint'] - 1
+                existed_advertiser_num = state['value']['uint']
                 break
         assert(advertiser_num >= existed_advertiser_num)
         return existed_advertiser_num
