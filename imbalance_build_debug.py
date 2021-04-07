@@ -98,6 +98,7 @@ def build_main(init, cate_num, adv_nums):
 
     time.sleep(5)
     # verifying opt-in results by comparing the hash value
+    print("Verifying the contract opt-in process...\n")
     contract.create_hash_local_file(user)
     for count in range(cate_num):
         time.sleep(5)
