@@ -101,28 +101,28 @@ def test_main(cate_num, adv_num):
     
     # search & online hash testing
     print("Testing searching capability of smart contract of " + str(cate_num) + " categories...\n")
-    for idx in range(1, cate_num + 1):
-        full_serach_time = 0.
-        local_hash_time = 0.
-        hash_search_time = 0.
-        for target in range(1, idx + 1):
-            search_category = "Category" + str(target)
-            start = time.time()
-            contract.full_search(user, search_category)
-            full_serach_time += (time.time() - start)
-            
-            time.sleep(3)
-            contract.create_hash_local_file(user)
-        
-            start = time.time()
-            local_hexdigest = contract.compute_local_hash(user, search_category)  
-            local_hash_time += (time.time() - start)
+    full_serach_time = 0.
+    local_hash_time = 0.
+    hash_search_time = 0.
 
-            start = time.time()
-            online_hexdigest = contract.search_hash(user, search_category) 
-            hash_search_time += (time.time() - start)
-            assert(local_hexdigest == online_hexdigest)
-            time.sleep(3)
+    for idx in range(1, cate_num + 1):
+        search_category = "Category" + str(idx)
+        start = time.time()
+        contract.full_search(user, search_category)
+        full_serach_time += (time.time() - start)
+            
+        time.sleep(3)
+        contract.create_hash_local_file(user)
+        
+        start = time.time()
+        local_hexdigest = contract.compute_local_hash(user, search_category)  
+        local_hash_time += (time.time() - start)
+
+        start = time.time()
+        online_hexdigest = contract.search_hash(user, search_category) 
+        hash_search_time += (time.time() - start)
+        assert(local_hexdigest == online_hexdigest)
+        time.sleep(3)
 
         with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
             fp.write("The time cost of search " + str(idx) + " categories is: " + str(full_serach_time) + "\n")
