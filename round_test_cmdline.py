@@ -135,10 +135,10 @@ def test_main(cate_num, adv_num, key):
         assert(local_hexdigest == online_hexdigest)
         time.sleep(3)
 
-        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-            fp.write("The time cost of search " + str(idx) + " categories is: " + str(full_serach_time) + "\n")
-            fp.write("The time cost of local hash computation of " + str(idx) + " categories is: " + str(local_hash_time) + "\n")
-            fp.write("The time cost of on-chain hash searching of " + str(idx) + " categories is: " + str(hash_search_time) + "\n")   
+    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+        fp.write("The time cost of search " + str(cate_num) + " categories is: " + str(full_serach_time) + "\n")
+        fp.write("The time cost of local hash computation of " + str(cate_num) + " categories is: " + str(local_hash_time) + "\n")
+        fp.write("The time cost of on-chain hash searching of " + str(cate_num) + " categories is: " + str(hash_search_time) + "\n")   
 
 
 if __name__ == "__main__":
