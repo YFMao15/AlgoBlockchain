@@ -99,6 +99,7 @@ def test_main(cate_num, adv_nums, key):
     assert(local_hexdigest == online_hexdigest)
 
     # search & online hash testing
+    time.sleep(5)
     print("Testing searching capability of smart contract of " + str(cate_num) + " categories...\n")
     full_serach_time = 0.
     local_hash_time = 0.

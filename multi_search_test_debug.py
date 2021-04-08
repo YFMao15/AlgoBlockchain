@@ -67,6 +67,39 @@ def test_main(cate_num, adv_num):
         # print("Contract mneumonic passphrase: ")
         # print(content_info)
 
+        print("Testing opting in advertiser...\n")
+        info = account.generate_account()
+        adv = Advertiser(API_key, algod_address, index_address, mnemonic.from_private_key(info[0]))
+        adv.login()
+        input_categories = []
+        input_categories.append("Category1")
+        adv.assign_category(input_categories)
+        send_money(banker, adv, 11000000)
+        start = time.time()
+        contract.opt_in_app(adv) 
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of opting in one advertiser is: " + str(time.time() - start) + "\n")
+        time.sleep(5)
+        
+        print("Testing updating advertiser...\n")
+        start = time.time()
+        contract.update_app(adv)
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of updating one advertiser is: " + str(time.time() - start) + "\n")
+
+        time.sleep(5)
+        contract.create_hash_local_file(user)
+        local_hexdigest = contract.compute_local_hash(user, "Category1")
+        online_hexdigest = contract.search_hash(user, "Category1")         
+        assert(local_hexdigest == online_hexdigest)
+
+        # close out testing
+        print("Testing closing out advertiser...\n")
+        start = time.time()
+        contract.close_out_app(adv)
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of closing out one advertiser is: " + str(time.time() - start) + "\n")
+
         # search & online hash testing
         search_category = "Category1"
         start = time.time()
