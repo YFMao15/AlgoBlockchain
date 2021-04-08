@@ -67,6 +67,9 @@ def test_main(cate_num, adv_num, key):
     full_serach_time = 0.
     local_hash_time = 0.
     hash_search_time = 0.
+    opt_in_time = 0.
+    update_time = 0.
+    close_out_time = 0.
     print("Testing searching capability of smart contract of " + str(cate_num) + " categories...\n")
     for idx in range(1, cate_num + 1):
         print("Reading existed contract app...\n")
@@ -90,16 +93,14 @@ def test_main(cate_num, adv_num, key):
         send_money(banker, adv, 11000000)
         start = time.time()
         contract.opt_in_app(adv) 
-        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-            fp.write("The time cost of opting in one advertiser is: " + str(time.time() - start) + "\n")
+        opt_in_time += (time.time() - start)
         time.sleep(5)
         
         print("Testing updating advertiser...\n")
         start = time.time()
         contract.update_app(adv)
-        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-            fp.write("The time cost of updating one advertiser is: " + str(time.time() - start) + "\n")
-
+        update_time += (time.time() - start)
+            
         time.sleep(5)
         contract.create_hash_local_file(user)
         local_hexdigest = contract.compute_local_hash(user, "Category1")
@@ -110,10 +111,10 @@ def test_main(cate_num, adv_num, key):
         print("Testing closing out advertiser...\n")
         start = time.time()
         contract.close_out_app(adv)
-        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-            fp.write("The time cost of closing out one advertiser is: " + str(time.time() - start) + "\n")
-
+        close_out_time += (time.time() - start)
+            
         # search & online hash testing
+        time.sleep(3)
         search_category = "Category1"
         start = time.time()
         contract.full_search(user, search_category)
@@ -133,6 +134,9 @@ def test_main(cate_num, adv_num, key):
         time.sleep(3)
 
     with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+        fp.write("The time cost of opting in one advertiser is: " + str(opt_in_time) + "\n")
+        fp.write("The time cost of updating one advertiser is: " + str(update_time) + "\n")
+        fp.write("The time cost of closing out one advertiser is: " + str(close_out_time) + "\n")
         fp.write("The time cost of search " + str(cate_num) + " categories is: " + str(full_serach_time) + "\n")
         fp.write("The time cost of local hash computation of " + str(cate_num) + " categories is: " + str(local_hash_time) + "\n")
         fp.write("The time cost of on-chain hash searching of " + str(cate_num) + " categories is: " + str(hash_search_time) + "\n")   
