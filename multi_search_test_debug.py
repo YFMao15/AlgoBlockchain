@@ -57,7 +57,7 @@ def test_main(cate_num, adv_num):
     print("Testing searching capability of smart contract of " + str(cate_num) + " categories...\n")
     for idx in range(1, cate_num + 1):
         print("Reading existed contract app...\n")
-        with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_num) + "_cate_1_" + idx +".txt"), "r") as fp:
+        with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_num) + "_cate_1_" + str(idx) + ".txt"), "r") as fp:
             content_info = fp.readline()
         contract = Contract(API_key, algod_address, index_address, content_info)
         contract.log_file = "test_search_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".log"
