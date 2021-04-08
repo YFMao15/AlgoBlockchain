@@ -51,46 +51,45 @@ def test_main(cate_num, adv_num):
         passphrase = "code thrive mouse code badge example pride stereo sell viable adjust planet text close erupt embrace nature upon february weekend humble surprise shrug absorb faint")
     banker.login()
 
-    print("Reading existed contract app...\n")
-    with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".txt"), "r") as fp:
-        content_info = fp.readline()
-    contract = Contract(API_key, algod_address, index_address, content_info)
-    contract.log_file = "test_search_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".log"
-    contract.create_code()
-    contract.compile_code()
-    print("Contract application checking complete\n")
-    # print("Contract mneumonic passphrase: ")
-    # print(content_info)
-
-    # search & online hash testing
+    full_serach_time = 0.
+    local_hash_time = 0.
+    hash_search_time = 0.
+    print("Testing searching capability of smart contract of " + str(cate_num) + " categories...\n")
     for idx in range(1, cate_num + 1):
-        full_serach_time = 0.
-        local_hash_time = 0.
-        hash_search_time = 0.
-        print("Testing searching capability of smart contract of " + str(idx) + " categories...\n")
-        for target in range(1, idx + 1):
-            search_category = "Category" + str(target)
-            start = time.time()
-            contract.full_search(user, search_category)
-            full_serach_time += (time.time() - start)
+        print("Reading existed contract app...\n")
+        with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_num) + "_cate_1_" + idx +".txt"), "r") as fp:
+            content_info = fp.readline()
+        contract = Contract(API_key, algod_address, index_address, content_info)
+        contract.log_file = "test_search_adv_" + str(adv_num) + "_cate_" + str(cate_num) + ".log"
+        contract.create_code()
+        contract.compile_code()
+        print("Contract application checking complete\n")
+        # print("Contract mneumonic passphrase: ")
+        # print(content_info)
+
+        # search & online hash testing
+        search_category = "Category1"
+        start = time.time()
+        contract.full_search(user, search_category)
+        full_serach_time += (time.time() - start)
             
-            time.sleep(3)
-            contract.create_hash_local_file(user)
+        time.sleep(3)
+        contract.create_hash_local_file(user)
         
-            start = time.time()
-            local_hexdigest = contract.compute_local_hash(user, search_category)  
-            local_hash_time += (time.time() - start)
+        start = time.time()
+        local_hexdigest = contract.compute_local_hash(user, search_category)  
+        local_hash_time += (time.time() - start)
 
-            start = time.time()
-            online_hexdigest = contract.search_hash(user, search_category) 
-            hash_search_time += (time.time() - start)
-            assert(local_hexdigest == online_hexdigest)
-            time.sleep(3)
+        start = time.time()
+        online_hexdigest = contract.search_hash(user, search_category) 
+        hash_search_time += (time.time() - start)
+        assert(local_hexdigest == online_hexdigest)
+        time.sleep(3)
 
-        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-            fp.write("The time cost of search " + str(idx) + " categories is: " + str(full_serach_time) + "\n")
-            fp.write("The time cost of local hash computation of " + str(idx) + " categories is: " + str(local_hash_time) + "\n")
-            fp.write("The time cost of on-chain hash searching of " + str(idx) + " categories is: " + str(hash_search_time) + "\n")   
+    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+        fp.write("The time cost of search " + str(cate_num) + " categories is: " + str(full_serach_time) + "\n")
+        fp.write("The time cost of local hash computation of " + str(cate_num) + " categories is: " + str(local_hash_time) + "\n")
+        fp.write("The time cost of on-chain hash searching of " + str(cate_num) + " categories is: " + str(hash_search_time) + "\n")   
 
 
 if __name__ == "__main__":
