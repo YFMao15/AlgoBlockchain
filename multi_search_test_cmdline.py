@@ -66,7 +66,6 @@ def test_main(cate_num, adv_num, key):
 
     full_serach_time = 0.
     local_hash_time = 0.
-    hash_search_time = 0.
     opt_in_time = 0.
     update_time = 0.
     close_out_time = 0.
@@ -83,6 +82,7 @@ def test_main(cate_num, adv_num, key):
         # print("Contract mneumonic passphrase: ")
         # print(content_info)
 
+        # opt-in testing
         print("Testing opting in advertiser...\n")
         info = account.generate_account()
         adv = Advertiser(API_key, algod_address, index_address, mnemonic.from_private_key(info[0]))
@@ -90,22 +90,19 @@ def test_main(cate_num, adv_num, key):
         input_categories = []
         input_categories.append("Category1")
         adv.assign_category(input_categories)
+        adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
         send_money(banker, adv, 11000000)
         start = time.time()
         contract.opt_in_app(adv) 
         opt_in_time += (time.time() - start)
         time.sleep(5)
         
+        # update testing
         print("Testing updating advertiser...\n")
+        adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
         start = time.time()
         contract.update_app(adv)
         update_time += (time.time() - start)
-            
-        time.sleep(5)
-        contract.create_hash_local_file(user)
-        local_hexdigest = contract.compute_local_hash(user, "Category1")
-        online_hexdigest = contract.search_hash(user, "Category1")         
-        assert(local_hexdigest == online_hexdigest)
 
         # close out testing
         print("Testing closing out advertiser...\n")
@@ -127,19 +124,12 @@ def test_main(cate_num, adv_num, key):
         local_hexdigest = contract.compute_local_hash(user, search_category)  
         local_hash_time += (time.time() - start)
 
-        start = time.time()
-        online_hexdigest = contract.search_hash(user, search_category) 
-        hash_search_time += (time.time() - start)
-        assert(local_hexdigest == online_hexdigest)
-        time.sleep(3)
-
     with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
         fp.write("The time cost of opting in one advertiser is: " + str(opt_in_time) + "\n")
         fp.write("The time cost of updating one advertiser is: " + str(update_time) + "\n")
         fp.write("The time cost of closing out one advertiser is: " + str(close_out_time) + "\n")
         fp.write("The time cost of search " + str(cate_num) + " categories is: " + str(full_serach_time) + "\n")
         fp.write("The time cost of local hash computation of " + str(cate_num) + " categories is: " + str(local_hash_time) + "\n")
-        fp.write("The time cost of on-chain hash searching of " + str(cate_num) + " categories is: " + str(hash_search_time) + "\n")   
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Running the round testing of blockchain in cmd mode.')

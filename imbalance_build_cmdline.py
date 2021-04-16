@@ -99,6 +99,7 @@ def build_main(init, cate_num, adv_nums, key):
             adv = Advertiser(API_key, algod_address, index_address, mnemonic.from_private_key(info[0]))
             adv.login()
             adv.assign_category(["Category" + str(count + 1)])
+            adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
             send_money(banker, adv, 11000000)
             time.sleep(2)
             contract.opt_in_app(adv)
@@ -107,16 +108,6 @@ def build_main(init, cate_num, adv_nums, key):
             if (x + 1) % 5 == 0:
                 print(str(x + 1) + " / " + str(building_adv_num) + " advertisers in category " + "Category" + str(count + 1) + " finished opting-in")
     print("Advertiser opting-in complete\n")
-
-    time.sleep(5)
-    # verifying opt-in results by comparing the hash value
-    print("Verifying the contract opt-in process...\n")
-    contract.create_hash_local_file(user)
-    for count in range(cate_num):
-        time.sleep(5)
-        local_hexdigest = contract.compute_local_hash(user, "Category" + str(count + 1))
-        online_hexdigest = contract.search_hash(user, "Category" + str(count + 1))
-        assert(local_hexdigest == online_hexdigest)
 
 if __name__ == "__main__":
     def str2bool(input_cmd):

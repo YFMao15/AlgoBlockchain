@@ -1,6 +1,8 @@
 import os
 import json
 import base64
+import random
+import string
 from pyteal import *
 from algosdk import encoding
 from algosdk import account
@@ -21,6 +23,7 @@ class Advertiser():
         self.algod_client = None
         self.indexer_client = None
         self.category = None
+        self.content = None
 
     def login(self):
         purestake_token = {'X-API-key': self.API_key}

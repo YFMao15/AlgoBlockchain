@@ -6,11 +6,13 @@ import base64
 import time
 import random
 import string
+import numpy as np
 from pyteal import *
+from binascii import hexlify
 from algosdk import mnemonic
 from algosdk.v2client import algod, indexer
 from algosdk.future import transaction
-from Cryptodome.Hash import SHA256
+from Cryptodome.Hash import SHAKE256
 
 class Contract():
     def __init__(self, API_key, algod_address, index_address, passphrase):
@@ -55,137 +57,60 @@ class Contract():
         self.search_file = "search.log"
         self.verify_file = "verify.log"
         self.directory = os.path.dirname(__file__)
+        self.hash_vector_size = 1024
+        self.hash_element_bits = 16
+        self.hash_index_bits = 64
 
     def create_code(self):
         create_content = Seq([
             App.globalPut(Bytes("Index"), Int(0)),
             App.globalPut(Bytes("Category"), Txn.application_args[1]),
-            App.globalPut(Bytes("Hash"), Int(0)),
             Return(Int(1))
         ])
 
-        opt_in_hash = Substring(
-            Sha256(Concat(
-                Itob(App.globalGet(Bytes("Index"))), 
-                Txn.application_args[2],
-                Txn.application_args[3],
-                Txn.application_args[4],
-                Txn.application_args[5],
-                Txn.application_args[6],
-                Txn.application_args[7],
-                Txn.application_args[8],
-                Txn.application_args[9],
-                Txn.application_args[10],
-                Txn.application_args[11],
-                Txn.application_args[12],
-                Txn.application_args[13]
-            )),
-            Int(0), Int(8))
-
-        add_hash = If(
-            BitwiseNot(App.globalGet(Bytes("Temp"))) > App.globalGet(Bytes("Hash")),
-            App.globalPut(
-                Bytes("Hash"), 
-                Add(App.globalGet(Bytes("Temp")), App.globalGet(Bytes("Hash")))),
-            App.globalPut(
-                Bytes("Hash"), 
-                Minus(
-                    Int(2**64 - 2),
-                    Add(BitwiseNot(App.globalGet(Bytes("Temp"))), BitwiseNot(App.globalGet(Bytes("Hash")))))),
-        )
-
         opt_in = If(
-            Txn.application_args[1] == App.globalGet(Bytes("Category")),
+            Txn.application_args[0] == App.globalGet(Bytes("Category")),
             Seq([
                 App.globalPut(Bytes("Index"), App.globalGet(Bytes("Index")) + Int(1)),
-                App.globalPut(Bytes("Temp"), Btoi(opt_in_hash)),
-                add_hash,
                 App.localPut(Int(0), Bytes("Index"), App.globalGet(Bytes("Index"))),
-                App.localPut(Int(0), Bytes("Share1"), Txn.application_args[2]),
-                App.localPut(Int(0), Bytes("Share2"), Txn.application_args[3]),
-                App.localPut(Int(0), Bytes("Share3"), Txn.application_args[4]),
-                App.localPut(Int(0), Bytes("Share4"), Txn.application_args[5]),
-                App.localPut(Int(0), Bytes("Share5"), Txn.application_args[6]),
-                App.localPut(Int(0), Bytes("Share6"), Txn.application_args[7]),
-                App.localPut(Int(0), Bytes("Share7"), Txn.application_args[8]),
-                App.localPut(Int(0), Bytes("Share8"), Txn.application_args[9]),
-                App.localPut(Int(0), Bytes("Share9"), Txn.application_args[10]),
-                App.localPut(Int(0), Bytes("Share10"), Txn.application_args[11]),
-                App.localPut(Int(0), Bytes("Share11"), Txn.application_args[12]),
-                App.localPut(Int(0), Bytes("Share12"), Txn.application_args[13]),
-                App.globalDel(Bytes("Temp")),
+                App.localPut(Int(0), Bytes("Share1"), Txn.application_args[1]),
+                App.localPut(Int(0), Bytes("Share2"), Txn.application_args[2]),
+                App.localPut(Int(0), Bytes("Share3"), Txn.application_args[3]),
+                App.localPut(Int(0), Bytes("Share4"), Txn.application_args[4]),
+                App.localPut(Int(0), Bytes("Share5"), Txn.application_args[5]),
+                App.localPut(Int(0), Bytes("Share6"), Txn.application_args[6]),
+                App.localPut(Int(0), Bytes("Share7"), Txn.application_args[7]),
+                App.localPut(Int(0), Bytes("Share8"), Txn.application_args[8]),
+                App.localPut(Int(0), Bytes("Share9"), Txn.application_args[9]),
+                App.localPut(Int(0), Bytes("Share10"), Txn.application_args[10]),
+                App.localPut(Int(0), Bytes("Share11"), Txn.application_args[11]),
+                App.localPut(Int(0), Bytes("Share12"), Txn.application_args[12]),
+                App.localPut(Int(0), Bytes("Share13"), Txn.application_args[13]),
+                App.localPut(Int(0), Bytes("Share14"), Txn.application_args[14]),
+                App.localPut(Int(0), Bytes("Share15"), Txn.application_args[15]),
                 Return(Int(1))
             ]),
             Return(Int(0))   
         )
-
-        obsolete_hash = Substring(
-            Sha256(Concat(
-                Itob(App.localGet(Int(0), Bytes("Index"))), 
-                App.localGet(Int(0), Bytes("Share1")),
-                App.localGet(Int(0), Bytes("Share2")),
-                App.localGet(Int(0), Bytes("Share3")),
-                App.localGet(Int(0), Bytes("Share4")),
-                App.localGet(Int(0), Bytes("Share5")),
-                App.localGet(Int(0), Bytes("Share6")),
-                App.localGet(Int(0), Bytes("Share7")),
-                App.localGet(Int(0), Bytes("Share8")),
-                App.localGet(Int(0), Bytes("Share9")),
-                App.localGet(Int(0), Bytes("Share10")),
-                App.localGet(Int(0), Bytes("Share11")),
-                App.localGet(Int(0), Bytes("Share12"))
-            )),
-            Int(0), Int(8))
-
-        minus_hash = If(
-            App.globalGet(Bytes("Hash")) > App.globalGet(Bytes("Prev")),
-            App.globalPut(
-                Bytes("Hash"),
-                Minus(App.globalGet(Bytes("Hash")), App.globalGet(Bytes("Prev")))),
-            App.globalPut(
-                Bytes("Hash"),
-                Add(App.globalGet(Bytes("Hash")), BitwiseNot(App.globalGet(Bytes("Prev"))) + Int(1)))
-        )
-
-        updated_hash = Substring(
-            Sha256(Concat(
-                Itob(App.localGet(Int(0), Bytes("Index"))), 
-                Txn.application_args[2],
-                Txn.application_args[3],
-                Txn.application_args[4],
-                Txn.application_args[5],
-                Txn.application_args[6],
-                Txn.application_args[7],
-                Txn.application_args[8],
-                Txn.application_args[9],
-                Txn.application_args[10],
-                Txn.application_args[11],
-                Txn.application_args[12],
-                Txn.application_args[13]
-            )),
-            Int(0), Int(8))
         
         update = If(
             App.optedIn(Int(0), App.id()),
             Seq([
-                App.globalPut(Bytes("Prev"), Btoi(obsolete_hash)),
-                minus_hash,
-                App.globalDel(Bytes("Prev")),
-                App.globalPut(Bytes("Temp"), Btoi(updated_hash)),
-                add_hash,
-                App.localPut(Int(0), Bytes("Share1"), Txn.application_args[2]),
-                App.localPut(Int(0), Bytes("Share2"), Txn.application_args[3]),
-                App.localPut(Int(0), Bytes("Share3"), Txn.application_args[4]),
-                App.localPut(Int(0), Bytes("Share4"), Txn.application_args[5]),
-                App.localPut(Int(0), Bytes("Share5"), Txn.application_args[6]),
-                App.localPut(Int(0), Bytes("Share6"), Txn.application_args[7]),
-                App.localPut(Int(0), Bytes("Share7"), Txn.application_args[8]),
-                App.localPut(Int(0), Bytes("Share8"), Txn.application_args[9]),
-                App.localPut(Int(0), Bytes("Share9"), Txn.application_args[10]),
-                App.localPut(Int(0), Bytes("Share10"), Txn.application_args[11]),
-                App.localPut(Int(0), Bytes("Share11"), Txn.application_args[12]),
-                App.localPut(Int(0), Bytes("Share12"), Txn.application_args[13]),
-                App.globalDel(Bytes("Temp")),
+                App.localPut(Int(0), Bytes("Share1"), Txn.application_args[1]),
+                App.localPut(Int(0), Bytes("Share2"), Txn.application_args[2]),
+                App.localPut(Int(0), Bytes("Share3"), Txn.application_args[3]),
+                App.localPut(Int(0), Bytes("Share4"), Txn.application_args[4]),
+                App.localPut(Int(0), Bytes("Share5"), Txn.application_args[5]),
+                App.localPut(Int(0), Bytes("Share6"), Txn.application_args[6]),
+                App.localPut(Int(0), Bytes("Share7"), Txn.application_args[7]),
+                App.localPut(Int(0), Bytes("Share8"), Txn.application_args[8]),
+                App.localPut(Int(0), Bytes("Share9"), Txn.application_args[9]),
+                App.localPut(Int(0), Bytes("Share10"), Txn.application_args[10]),
+                App.localPut(Int(0), Bytes("Share11"), Txn.application_args[11]),
+                App.localPut(Int(0), Bytes("Share12"), Txn.application_args[12]),
+                App.localPut(Int(0), Bytes("Share13"), Txn.application_args[13]),
+                App.localPut(Int(0), Bytes("Share14"), Txn.application_args[14]),
+                App.localPut(Int(0), Bytes("Share15"), Txn.application_args[15]),
                 Return(Int(1))
             ]),
             Return(Int(0))
@@ -194,8 +119,6 @@ class Contract():
         close_out = If(
             App.optedIn(Int(0), App.id()),
             Seq([
-                App.globalPut(Bytes("Prev"), Btoi(obsolete_hash)),
-                minus_hash,
                 App.localDel(Int(0), Bytes("Index")),
                 App.localDel(Int(0), Bytes("Share1")),
                 App.localDel(Int(0), Bytes("Share2")),
@@ -209,7 +132,9 @@ class Contract():
                 App.localDel(Int(0), Bytes("Share10")),
                 App.localDel(Int(0), Bytes("Share11")),
                 App.localDel(Int(0), Bytes("Share12")),
-                App.globalDel(Bytes("Prev")),
+                App.localDel(Int(0), Bytes("Share13")),
+                App.localDel(Int(0), Bytes("Share14")),
+                App.localDel(Int(0), Bytes("Share15")),
                 Return(Int(1))
             ]),
             Return(Int(0))
@@ -225,37 +150,7 @@ class Contract():
         self.TEAL_approve_condition = program
 
         # clear state is similar to close out, meaning to wipe out all state records in the account if close out is failed
-        obsolete_hash = Substring(
-            Sha256(Concat(
-                Itob(App.localGet(Int(0), Bytes("Index"))), 
-                App.localGet(Int(0), Bytes("Share1")),
-                App.localGet(Int(0), Bytes("Share2")),
-                App.localGet(Int(0), Bytes("Share3")),
-                App.localGet(Int(0), Bytes("Share4")),
-                App.localGet(Int(0), Bytes("Share5")),
-                App.localGet(Int(0), Bytes("Share6")),
-                App.localGet(Int(0), Bytes("Share7")),
-                App.localGet(Int(0), Bytes("Share8")),
-                App.localGet(Int(0), Bytes("Share9")),
-                App.localGet(Int(0), Bytes("Share10")),
-                App.localGet(Int(0), Bytes("Share11")),
-                App.localGet(Int(0), Bytes("Share12"))
-            )),
-            Int(0), Int(8))
-
-        minus_hash = If(
-            App.globalGet(Bytes("Hash")) > App.globalGet(Bytes("Prev")),
-            App.globalPut(
-                Bytes("Hash"),
-                Minus(App.globalGet(Bytes("Hash")), App.globalGet(Bytes("Prev")))),
-            App.globalPut(
-                Bytes("Hash"),
-                Add(App.globalGet(Bytes("Hash")), BitwiseNot(App.globalGet(Bytes("Prev"))) + Int(1)))
-        )
-
         clear_state = Seq([
-                App.globalPut(Bytes("Prev"), Btoi(obsolete_hash)),
-                minus_hash,
                 App.localDel(Int(0), Bytes("Index")),
                 App.localDel(Int(0), Bytes("Share1")),
                 App.localDel(Int(0), Bytes("Share2")),
@@ -269,7 +164,9 @@ class Contract():
                 App.localDel(Int(0), Bytes("Share10")),
                 App.localDel(Int(0), Bytes("Share11")),
                 App.localDel(Int(0), Bytes("Share12")),
-                App.globalDel(Bytes("Prev")),
+                App.localDel(Int(0), Bytes("Share13")),
+                App.localDel(Int(0), Bytes("Share14")),
+                App.localDel(Int(0), Bytes("Share15")),
                 Return(Int(1))
             ])
             
@@ -302,20 +199,20 @@ class Contract():
             fp.write("Transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')) + "\n")        
         return True
 
-    def intToBytes(self, integer):
-        lower8 = (1 << 8) - 1
-        char_list = [
-            (integer >> (8*7)) & lower8,
-            (integer >> (8*6)) & lower8,
-            (integer >> (8*5)) & lower8,
-            (integer >> (8*4)) & lower8,
-            (integer >> (8*3)) & lower8,
-            (integer >> (8*2)) & lower8,
-            (integer >> (8*1)) & lower8,
-            integer & lower8
-        ]
-        string = ''.join(chr(c) for c in char_list)
-        return string.encode('latin1')
+    # def intToBytes(self, integer):
+    #     lower8 = (1 << 8) - 1
+    #     char_list = [
+    #         (integer >> (8*7)) & lower8,
+    #         (integer >> (8*6)) & lower8,
+    #         (integer >> (8*5)) & lower8,
+    #         (integer >> (8*4)) & lower8,
+    #         (integer >> (8*3)) & lower8,
+    #         (integer >> (8*2)) & lower8,
+    #         (integer >> (8*1)) & lower8,
+    #         integer & lower8
+    #     ]
+    #     string = ''.join(chr(c) for c in char_list)
+    #     return string.encode('latin1')
 
     def create_content_app(self, input_category):
         on_complete = transaction.OnComplete.NoOpOC.real
@@ -324,42 +221,27 @@ class Contract():
         params.fee = 0.1
 
         global_schema = transaction.StateSchema(6, 6)
-        local_schema = transaction.StateSchema(1, 12)
+        local_schema = transaction.StateSchema(1, 15)
 
         app_args = [
             b'Create',
             bytes(input_category, "utf-8"),
         ]
 
-        # re-do until the request is received and confirmed
-        received = False
-        while (not received):
-            try:
-                # create / sign / verify transaction
-                txn = transaction.ApplicationCreateTxn(
-                    self.account_public_key, params, on_complete, \
-                    self.TEAL_approve_program, self.TEAL_clear_program, \
-                    global_schema, local_schema, app_args)
-                signed_txn = txn.sign(self.account_private_key)
-                tx_id = signed_txn.transaction.get_txid()
-                self.contract_client.send_transactions([signed_txn])
-                received = self.wait_for_confirmation(tx_id)
-            except:
-                pass
-
-        # txn = transaction.ApplicationCreateTxn(
-        #             self.account_public_key, params, on_complete, \
-        #             self.TEAL_approve_program, self.TEAL_clear_program, \
-        #             global_schema, local_schema, app_args)
-        # signed_txn = txn.sign(self.account_private_key)
-        # tx_id = signed_txn.transaction.get_txid()
-        # self.contract_client.send_transactions([signed_txn])
+        # create / sign / verify transaction
+        txn = transaction.ApplicationCreateTxn(
+            self.account_public_key, params, on_complete, \
+            self.TEAL_approve_program, self.TEAL_clear_program, \
+            global_schema, local_schema, app_args)
+        signed_txn = txn.sign(self.account_private_key)
+        tx_id = signed_txn.transaction.get_txid()
+        self.contract_client.send_transactions([signed_txn])
+        self.wait_for_confirmation(tx_id)
 
         # display results
         transaction_response = self.contract_client.pending_transaction_info(tx_id)
-        curr_app_id = transaction_response['application-index']
         with open(os.path.join(self.directory, self.log_file), "a+") as fp:
-            fp.write("Created new app: " + str(curr_app_id) + "\n")
+            fp.write("Created new app: " + str(transaction_response['application-index']) + "\n")
             
     def opt_in_app(self, opt_in_advertiser):
         for category in opt_in_advertiser.category:
@@ -387,32 +269,14 @@ class Contract():
             params.flat_fee = True
             params.fee = 0.1
             app_args = [
-                b'Opt-in',
                 bytes(category, 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8')
-            ]
+            ] + [opt_in_advertiser.content[x*64: (x+1)*64] for x in range(15)]
 
-            received = False
-            while (not received):
-                try:
-                    txn = transaction.ApplicationOptInTxn(opt_in_advertiser.account_public_key, params, app_id, app_args=app_args)
-                    signed_txn = txn.sign(opt_in_advertiser.account_private_key)
-                    tx_id = signed_txn.transaction.get_txid()
-                    self.contract_client.send_transactions([signed_txn])
-                    received = self.wait_for_confirmation(tx_id)
-                except:
-                    pass
+            txn = transaction.ApplicationOptInTxn(opt_in_advertiser.account_public_key, params, app_id, app_args=app_args)
+            signed_txn = txn.sign(opt_in_advertiser.account_private_key)
+            tx_id = signed_txn.transaction.get_txid()
+            self.contract_client.send_transactions([signed_txn])
+            self.wait_for_confirmation(tx_id)
 
             transaction_response = self.contract_client.pending_transaction_info(tx_id)
             with open(os.path.join(self.directory, self.log_file), "a+") as fp:
@@ -444,32 +308,14 @@ class Contract():
             params.flat_fee = True
             params.fee = 0.1
             app_args = [
-                b'Update',
                 bytes(category, 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8'),
-                bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=64)), 'utf-8')
-            ]
+            ] + [update_advertiser.content[x*64: (x+1)*64] for x in range(15)]
 
-            received = False
-            while (not received):
-                try:
-                    txn = transaction.ApplicationNoOpTxn(update_advertiser.account_public_key, params, app_id, app_args=app_args)
-                    signed_txn = txn.sign(update_advertiser.account_private_key)
-                    tx_id = signed_txn.transaction.get_txid()
-                    self.contract_client.send_transactions([signed_txn])
-                    received = self.wait_for_confirmation(tx_id)
-                except:
-                    pass
+            txn = transaction.ApplicationNoOpTxn(update_advertiser.account_public_key, params, app_id, app_args=app_args)
+            signed_txn = txn.sign(update_advertiser.account_private_key)
+            tx_id = signed_txn.transaction.get_txid()
+            self.contract_client.send_transactions([signed_txn])
+            self.wait_for_confirmation(tx_id)
 
             transaction_response = self.contract_client.pending_transaction_info(tx_id)
             with open(os.path.join(self.directory, self.log_file), "a+") as fp:
@@ -501,19 +347,14 @@ class Contract():
             params.flat_fee = True
             params.fee = 0.1
             app_args = [
-                b'Close_Out',
+                b'Close_Out'
             ]
                 
-            received = False
-            while (not received):
-                try:
-                    txn = transaction.ApplicationCloseOutTxn(close_out_advertiser.account_public_key, params, app_id, app_args=app_args)
-                    signed_txn = txn.sign(close_out_advertiser.account_private_key)
-                    tx_id = signed_txn.transaction.get_txid()
-                    self.contract_client.send_transactions([signed_txn])
-                    received = self.wait_for_confirmation(tx_id)
-                except:
-                    pass
+            txn = transaction.ApplicationCloseOutTxn(close_out_advertiser.account_public_key, params, app_id, app_args=app_args)
+            signed_txn = txn.sign(close_out_advertiser.account_private_key)
+            tx_id = signed_txn.transaction.get_txid()
+            self.contract_client.send_transactions([signed_txn])
+            self.wait_for_confirmation(tx_id)
 
             transaction_response = self.contract_client.pending_transaction_info(tx_id)
             with open(os.path.join(self.directory, self.log_file), "a+") as fp:
@@ -548,17 +389,12 @@ class Contract():
                 b'Clear',
             ]
 
-            received = False
-            while (not received):
-                try:
-                    txn = transaction.ApplicationClearStateTxn(cleared_advertiser.account_public_key, params, app_id, app_args=app_args)
-                    signed_txn = txn.sign(cleared_advertiser.account_private_key)
-                    tx_id = signed_txn.transaction.get_txid()
-                    self.contract_client.send_transactions([signed_txn])
-                    received = self.wait_for_confirmation(tx_id)
-                except:
-                    pass
-
+            txn = transaction.ApplicationClearStateTxn(cleared_advertiser.account_public_key, params, app_id, app_args=app_args)
+            signed_txn = txn.sign(cleared_advertiser.account_private_key)
+            tx_id = signed_txn.transaction.get_txid()
+            self.contract_client.send_transactions([signed_txn])
+            self.wait_for_confirmation(tx_id)
+            
             transaction_response = self.contract_client.pending_transaction_info(tx_id)
             with open(os.path.join(self.directory, self.log_file), "a+") as fp:
                 fp.write("Cleared app: " + str(transaction_response['txn']['txn']['apid']) + "\n")    
@@ -679,7 +515,7 @@ class Contract():
                         key_order = int(base64.b64decode(state['key']).decode("utf-8")[5:])
                         content.append((key_order, base64.b64decode(state['value']['bytes']).decode("utf-8")))
                 assert(type(index) is int)
-                assert(len(content) == 12)
+                assert(len(content) == 15)
                 output  = ""
                 for share in sorted(content, key=lambda x:x[0]):
                     output += share[1]
@@ -699,46 +535,16 @@ class Contract():
         with open(os.path.join(self.directory, self.verify_file), "r") as fp:
             contents = json.loads(fp.readline())[input_category]
 
-        total_digest = 0
+        total_digest = np.array([0] * self.hash_vector_size)
         for content in contents:
-            local_hash = SHA256.new()
+            local_hash = SHAKE256.new()
             index = list(content.keys())[0]
             shares = list(content.values())[0]
-            local_hash.update(self.intToBytes(int(index)) + bytes(shares, 'utf-8'))
-            local_digest = int(local_hash.hexdigest()[:16], 16)
-            total_digest += local_digest
+            local_hash.update(bytes(str(index) + shares,'utf-8'))
+            digest = hexlify(local_hash.read(self.hash_vector_size * self.hash_element_bits // 8))
+            for x in range(self.hash_vector_size):
+                total_digest[x] += int(digest[x*4 : (x+1)*4], 16)
+            total_digest = np.mod(total_digest, 2**16)
         
-        return total_digest % 2**64
-
-    def search_hash(self, user, input_category):
-        apps = user.algod_client.account_info(self.account_public_key)['created-apps']
-        app_id = None
-        matched = False
-        for app in apps:
-            if 'application' in app:
-                global_states = app['application']['params']['global-state']
-            else:
-                global_states = app['params']['global-state']
-
-            for state in global_states:
-                if base64.b64decode(state['key']).decode("utf-8") == "Category":
-                    if base64.b64decode(state['value']['bytes']).decode("utf-8") == input_category:
-                        matched = True
-                        app_id = int(app['id'])
-                        break
-            if matched is True:
-                break
-        assert(type(app_id) is int)
-        assert(matched is True)
-
-        app = user.indexer_client.applications(app_id)
-        if 'application' in app:
-            global_states = app['application']['params']['global-state']
-        else:
-            global_states = app['params']['global-state']
-        
-        for state in global_states:
-            if base64.b64decode(state['key']).decode("utf-8") == "Hash":
-                hash_onchain = state['value']['uint']
-        return hash_onchain
+        return total_digest.tolist()
         
