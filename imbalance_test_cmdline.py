@@ -84,7 +84,7 @@ def test_main(cate_num, adv_nums, key):
     # close out testing
     print("Testing closing out advertiser...\n")
     start = time.time()
-    contract.close_out_app(adv)
+    contract.clear_app(adv)
     with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
         fp.write("The time cost of closing out one advertiser in is: " + str(time.time() - start) + "\n")
 

@@ -84,7 +84,7 @@ def test_main(cate_num, adv_num):
     # close out testing
     print("Testing closing out advertiser...\n")
     start = time.time()
-    contract.close_out_app(adv)
+    contract.clear_app(adv)
     with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
         fp.write("The time cost of closing out one advertiser is: " + str(time.time() - start) + "\n")
 
@@ -115,8 +115,8 @@ if __name__ == "__main__":
     """
     CHANGE PARAMS HERE TO LAUNCH DIFFERENT MODE
     """
-    cate_num = 2
-    adv_num = 2
+    cate_num = 1
+    adv_num = 5
     assert(type(cate_num) is int)
     assert(type(adv_num) is int)
     test_main(cate_num, adv_num)

@@ -107,7 +107,7 @@ def test_main(cate_num, adv_num, key):
         # close out testing
         print("Testing closing out advertiser...\n")
         start = time.time()
-        contract.close_out_app(adv)
+        contract.clear_app(adv)
         close_out_time += (time.time() - start)
             
         # search & online hash testing

@@ -468,6 +468,8 @@ class Contract():
         opted_in_accounts = user.indexer_client.accounts(limit=10000, application_id = app_id)['accounts']
         results = []
         for account in opted_in_accounts:
+            if 'apps-local-state' not in account:
+                continue
             if 'key-value' not in account['apps-local-state'][0]:
                 continue
             local_states = account['apps-local-state'][0]['key-value']
@@ -503,6 +505,8 @@ class Contract():
             opted_in_accounts = user.indexer_client.accounts(limit=10000, application_id = app_info[0])['accounts']
             results = []
             for account in opted_in_accounts:
+                if 'apps-local-state' not in account:
+                    continue
                 if 'key-value' not in account['apps-local-state'][0]:
                     continue
                 local_states = account['apps-local-state'][0]['key-value']
