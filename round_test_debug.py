@@ -100,7 +100,7 @@ if __name__ == "__main__":
     CHANGE PARAMS HERE TO LAUNCH DIFFERENT MODE
     """
     cate_num = 1
-    adv_num = 5
+    adv_num = 1000
     search_mode = True
     assert(type(cate_num) is int)
     assert(type(adv_num) is int)
