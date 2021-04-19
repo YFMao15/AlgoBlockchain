@@ -1,13 +1,10 @@
 import os
-import re
 import sys
 import json
-import base64
 import time
-import random
+import base64
 import string
 from pyteal import *
-from binascii import b2a_hex
 from algosdk import mnemonic
 from algosdk.v2client import algod, indexer
 from algosdk.future import transaction

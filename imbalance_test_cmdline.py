@@ -2,29 +2,12 @@ import os
 import time
 import random
 import argparse
+from Utils import *
 from User import *
 from Advertiser import *
 from Contract import *
 
-def send_money(sender, receiver, send_amount):
-    def wait_for_confirmation(algodclient, txid):
-        last_round = algodclient.status().get('last-round')
-        txinfo = algodclient.pending_transaction_info(txid)
-        while not (txinfo.get('confirmed-round') and txinfo.get('confirmed-round') > 0):
-            last_round += 1
-            algodclient.status_after_block(last_round)
-            txinfo = algodclient.pending_transaction_info(txid)
-        with open(os.path.join(os.path.dirname(__file__), "debug.log"), "a+") as fp:
-            fp.write("Money transferring transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')) + "\n")
-        return True
-
-    params = sender.algod_client.suggested_params()
-    txn = transaction.PaymentTxn(sender.account_public_key, params, receiver.account_public_key, send_amount)
-    signed_txn = txn.sign(sender.account_private_key)
-    sender.algod_client.send_transactions([signed_txn])
-    wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
-
-def test_main(cate_num, adv_nums, key):
+def test_main(cate_num, adv_nums, key, search_mode):
     API_key = "CdYVr07ErYa3VNessIks1aPcmlRYPjfZ34KYF7TF"
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     index_address = "https://testnet-algorand.api.purestake.io/idx2"
@@ -56,37 +39,38 @@ def test_main(cate_num, adv_nums, key):
     # print("Contract mneumonic passphrase: ")
     # print(content_info)
 
-    # opt-in testing
-    print("Testing opting in advertiser...\n")
-    info = account.generate_account()
-    adv = Advertiser(API_key, algod_address, index_address, mnemonic.from_private_key(info[0]))
-    adv.login()
-    input_categories = []
-    for count in range(1, 1 + cate_num):
-        input_categories.append("Category" + str(count))
-        adv.assign_category(input_categories)
-    adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
-    send_money(banker, adv, 11000000)
-    start = time.time()
-    contract.opt_in_app(adv) 
-    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-        fp.write("The time cost of opting in one advertiser is: " + str(time.time() - start) + "\n")
-    time.sleep(5)
+    if not search_mode:
+        # opt-in testing
+        print("Testing opting in advertiser...\n")
+        info = account.generate_account()
+        adv = Advertiser(API_key, algod_address, index_address, mnemonic.from_private_key(info[0]))
+        adv.login()
+        input_categories = []
+        for count in range(1, 1 + cate_num):
+            input_categories.append("Category" + str(count))
+            adv.assign_category(input_categories)
+        adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
+        send_money(banker, adv, 11000000)
+        start = time.time()
+        contract.opt_in_app(adv) 
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of opting in one advertiser is: " + str(time.time() - start) + "\n")
+        time.sleep(5)
 
-    # update testing
-    print("Testing updating advertiser...\n")
-    adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
-    start = time.time()
-    contract.update_app(adv)
-    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-        fp.write("The time cost of updating one advertiser in is: " + str(time.time() - start) + "\n")
+        # update testing
+        print("Testing updating advertiser...\n")
+        adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
+        start = time.time()
+        contract.update_app(adv)
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of updating one advertiser in is: " + str(time.time() - start) + "\n")
 
-    # close out testing
-    print("Testing closing out advertiser...\n")
-    start = time.time()
-    contract.clear_app(adv)
-    with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
-        fp.write("The time cost of closing out one advertiser in is: " + str(time.time() - start) + "\n")
+        # close out testing
+        print("Testing closing out advertiser...\n")
+        start = time.time()
+        contract.clear_app(adv)
+        with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
+            fp.write("The time cost of closing out one advertiser in is: " + str(time.time() - start) + "\n")
 
     # search & online hash testing
     time.sleep(5)
@@ -121,12 +105,15 @@ if __name__ == "__main__":
         help='The index of key selected')
     parser.add_argument('-r', '--round-num', type=int,
         help='The testing rounds of the same experiment')
+    parser.add_argument('-s', '--search-mode', type=str2bool,
+        help='Only the searching experiments will be conducted')
 
     args = parser.parse_args(sys.argv[1:])
     cate_num = args.cate_num
     adv_nums = args.adv_nums
     key = args.key
     round_num = args.round_num
+    search_mode = args.search_mode
 
     assert(type(cate_num) is int)
     assert(type(adv_nums) is list)
@@ -134,7 +121,8 @@ if __name__ == "__main__":
     assert(type(key) is int)
     assert((key >= 1) and (key <= 6))
     assert(type(round_num) is int)
+    assert(type(search_mode) is bool)
 
     for _ in range(round_num):
-        test_main(cate_num, adv_nums, key)
+        test_main(cate_num, adv_nums, key, search_mode)
         time.sleep(5)

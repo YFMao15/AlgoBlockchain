@@ -1,14 +1,7 @@
 import os
-import json
-import base64
-import random
-import string
-from pyteal import *
-from algosdk import encoding
 from algosdk import account
 from algosdk import mnemonic
 from algosdk.v2client import algod, indexer
-from algosdk.future import transaction
 
 class Advertiser():
     def __init__(self, API_key, algod_address, index_address, passphrase):

@@ -1,35 +1,13 @@
 import os
 import time
+import random
 import argparse
+from Utils import *
 from User import *
 from Advertiser import *
 from Contract import *
 
-def send_money(sender, receiver, send_amount):
-    def wait_for_confirmation(algodclient, txid):
-        last_round = algodclient.status().get('last-round')
-        txinfo = algodclient.pending_transaction_info(txid)
-        while not (txinfo.get('confirmed-round') and txinfo.get('confirmed-round') > 0):
-            last_round += 1
-            algodclient.status_after_block(last_round)
-            txinfo = algodclient.pending_transaction_info(txid)
-        with open(os.path.join(os.path.dirname(__file__), "debug.log"), "a+") as fp:
-            fp.write("Money transferring transaction {} confirmed in round {}.".format(txid, txinfo.get('confirmed-round')) + "\n")
-        return True
-
-    params = sender.algod_client.suggested_params()
-    received = False
-    while (not received):
-        try:
-            txn = transaction.PaymentTxn(sender.account_public_key, params, receiver.account_public_key, send_amount)
-            signed_txn = txn.sign(sender.account_private_key)
-            sender.algod_client.send_transactions([signed_txn])
-            received = wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
-        except:
-            pass
-    wait_for_confirmation(sender.algod_client, txid = signed_txn.transaction.get_txid())
-
-def test_main(cate_num, adv_num, key):
+def test_main(cate_num, adv_num, key, search_mode):
     if int(key) == 1:
         API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC"
     elif int(key) == 2:
@@ -69,7 +47,6 @@ def test_main(cate_num, adv_num, key):
     opt_in_time = 0.
     update_time = 0.
     close_out_time = 0.
-    print("Testing searching capability of smart contract of " + str(cate_num) + " categories...\n")
     for idx in range(1, cate_num + 1):
         print("Reading existed contract app...\n")
         with open(os.path.join(os.path.dirname(__file__), "account_adv_" + str(adv_num) + "_cate_1_" + str(idx) + ".txt"), "r") as fp:
@@ -82,35 +59,37 @@ def test_main(cate_num, adv_num, key):
         # print("Contract mneumonic passphrase: ")
         # print(content_info)
 
-        # opt-in testing
-        print("Testing opting in advertiser...\n")
-        info = account.generate_account()
-        adv = Advertiser(API_key, algod_address, index_address, mnemonic.from_private_key(info[0]))
-        adv.login()
-        input_categories = []
-        input_categories.append("Category1")
-        adv.assign_category(input_categories)
-        adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
-        send_money(banker, adv, 11000000)
-        start = time.time()
-        contract.opt_in_app(adv) 
-        opt_in_time += (time.time() - start)
-        time.sleep(5)
-        
-        # update testing
-        print("Testing updating advertiser...\n")
-        adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
-        start = time.time()
-        contract.update_app(adv)
-        update_time += (time.time() - start)
+        if not search_mode:
+            # opt-in testing
+            print("Testing opting in advertiser...\n")
+            info = account.generate_account()
+            adv = Advertiser(API_key, algod_address, index_address, mnemonic.from_private_key(info[0]))
+            adv.login()
+            input_categories = []
+            input_categories.append("Category1")
+            adv.assign_category(input_categories)
+            adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
+            send_money(banker, adv, 11000000)
+            start = time.time()
+            contract.opt_in_app(adv) 
+            opt_in_time += (time.time() - start)
+            time.sleep(5)
+            
+            # update testing
+            print("Testing updating advertiser...\n")
+            adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
+            start = time.time()
+            contract.update_app(adv)
+            update_time += (time.time() - start)
 
-        # close out testing
-        print("Testing closing out advertiser...\n")
-        start = time.time()
-        contract.clear_app(adv)
-        close_out_time += (time.time() - start)
+            # close out testing
+            print("Testing closing out advertiser...\n")
+            start = time.time()
+            contract.clear_app(adv)
+            close_out_time += (time.time() - start)
             
         # search & online hash testing
+        print("Testing searching capability of smart contract...\n")
         time.sleep(3)
         search_category = "Category1"
         start = time.time()
@@ -141,19 +120,23 @@ if __name__ == "__main__":
         help='The index of key selected')
     parser.add_argument('-r', '--round-num', type=int,
         help='The testing rounds of the same experiment')
+    parser.add_argument('-s', '--search_mode', type=str2bool,
+        help='Only the searching experiments will be conducted')
 
     args = parser.parse_args(sys.argv[1:])
     adv_num = args.adv_num
     cate_num = args.cate_num
     key = args.key
     round_num = args.round_num
+    search_mode = args.search_mode
 
     assert(type(cate_num) is int)
     assert(type(adv_num) is int)
     assert(type(key) is int)
     assert((key >= 1) and (key <= 6))
     assert(type(round_num) is int)
+    assert(type(search_mode) is bool)
 
     for _ in range(round_num):
-        test_main(cate_num, adv_num, key)
+        test_main(cate_num, adv_num, key, search_mode)
         time.sleep(5)

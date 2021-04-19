@@ -1,13 +1,7 @@
 import os
-import json
-import base64
-from pyteal import *
-from algosdk import encoding
 from algosdk import account
 from algosdk import mnemonic
 from algosdk.v2client import algod, indexer
-from algosdk.future import transaction
-
 
 class User():
     def __init__(self, API_key, algod_address, index_address, passphrase):
@@ -21,7 +15,6 @@ class User():
         self.algod_client = None
         self.indexer_client = None
         
-
     def login(self):
         purestake_token = {'X-API-key': self.API_key}
         self.account_private_key = mnemonic.to_private_key(self.passphrase)
