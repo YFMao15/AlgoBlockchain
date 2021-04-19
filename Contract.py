@@ -548,6 +548,7 @@ class Contract():
         for digest in digests:
             total_digest += digest
         total_digest = np.mod(total_digest, 2**16)
+        assert(len(total_digest) == self.hash_vector_size)
 
         return total_digest
         
