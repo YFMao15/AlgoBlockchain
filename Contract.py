@@ -5,10 +5,11 @@ import time
 import base64
 import string
 from pyteal import *
+from blake3 import blake3
 from algosdk import mnemonic
 from algosdk.v2client import algod, indexer
 from algosdk.future import transaction
-from blake3 import blake3
+from multiprocessing import cpu_count, Pool
 
 class Contract():
     def __init__(self, API_key, algod_address, index_address, passphrase):
@@ -527,6 +528,13 @@ class Contract():
         with open(os.path.join(self.directory, self.verify_file), "a+") as fp:
             fp.write(json.dumps(all_app_results))
 
+    def lattice_hash(self, content):
+        index = list(content.keys())[0]
+        shares = list(content.values())[0]
+        local_hash = blake3(bytes(str(index) + shares,'utf-8'))
+        digest = local_hash.digest(length=self.hash_vector_size * self.hash_element_bits // 8).hex()
+        return digest
+
     def compute_local_hash(self, user, input_category):
         if input_category not in self.categories:
             sys.exit("Wrong search input!")
@@ -535,14 +543,14 @@ class Contract():
             contents = json.loads(fp.readline())[input_category]
 
         total_digest = [0] * self.hash_vector_size
-        for content in contents:
-            index = list(content.keys())[0]
-            shares = list(content.values())[0]
-            local_hash = blake3(bytes(str(index) + shares,'utf-8'))
-            digest = local_hash.digest(length=self.hash_vector_size * self.hash_element_bits // 8).hex()
+        cpus = cpu_count()
+        with Pool(cpus) as pool:
+            digests = pool.map(self.lattice_hash, contents)
+
+        for digest in digests:
             for x in range(self.hash_vector_size):
                 total_digest[x] += int(digest[x*4 : (x+1)*4], 16)
         total_digest = [x % (2**16) for x in total_digest]
-        
+
         return total_digest
         
