@@ -545,7 +545,7 @@ class Contract():
             digest = local_hash.digest(length=self.hash_vector_size * self.hash_element_bits // 8).hex()
             for x in range(self.hash_vector_size):
                 total_digest[x] += int(digest[x*4 : (x+1)*4], 16)
-        total_digest = [x % 2**16 for x in total_digest]
+        total_digest = [x % (2**16) for x in total_digest]
         
         return total_digest
         
