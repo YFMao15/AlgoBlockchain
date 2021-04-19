@@ -6,13 +6,12 @@ import base64
 import time
 import random
 import string
-import numpy as np
 from pyteal import *
-from binascii import hexlify
+from binascii import b2a_hex
 from algosdk import mnemonic
 from algosdk.v2client import algod, indexer
 from algosdk.future import transaction
-from Cryptodome.Hash import SHAKE256
+from blake3 import blake3
 
 class Contract():
     def __init__(self, API_key, algod_address, index_address, passphrase):
@@ -59,7 +58,6 @@ class Contract():
         self.directory = os.path.dirname(__file__)
         self.hash_vector_size = 1024
         self.hash_element_bits = 16
-        self.hash_index_bits = 64
 
     def create_code(self):
         create_content = Seq([
@@ -539,16 +537,15 @@ class Contract():
         with open(os.path.join(self.directory, self.verify_file), "r") as fp:
             contents = json.loads(fp.readline())[input_category]
 
-        total_digest = np.array([0] * self.hash_vector_size)
+        total_digest = [0] * self.hash_vector_size
         for content in contents:
-            local_hash = SHAKE256.new()
             index = list(content.keys())[0]
             shares = list(content.values())[0]
-            local_hash.update(bytes(str(index) + shares,'utf-8'))
-            digest = hexlify(local_hash.read(self.hash_vector_size * self.hash_element_bits // 8))
+            local_hash = blake3(bytes(str(index) + shares,'utf-8'))
+            digest = local_hash.digest(length=self.hash_vector_size * self.hash_element_bits // 8).hex()
             for x in range(self.hash_vector_size):
                 total_digest[x] += int(digest[x*4 : (x+1)*4], 16)
-            total_digest = np.mod(total_digest, 2**16)
+        total_digest = [x % 2**16 for x in total_digest]
         
-        return total_digest.tolist()
+        return total_digest
         
