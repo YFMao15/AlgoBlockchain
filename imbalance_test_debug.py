@@ -6,7 +6,7 @@ from User import *
 from Advertiser import *
 from Contract import *
 
-def test_main(cate_num, adv_nums, search_mode):
+def test_main(cate_num, adv_nums, search_mode, start_time):
     API_key = "CdYVr07ErYa3VNessIks1aPcmlRYPjfZ34KYF7TF"
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     index_address = "https://testnet-algorand.api.purestake.io/idx2"
@@ -75,7 +75,7 @@ def test_main(cate_num, adv_nums, search_mode):
     time.sleep(5)
     print("Testing searching capability of smart contract of " + str(cate_num) + " categories...\n")
     full_serach_time = 0.
-    local_hash_time = 0.
+    timestamp_search_time = 0.
 
     for idx in range(1, cate_num + 1):
         search_category = "Category" + str(idx)
@@ -84,15 +84,13 @@ def test_main(cate_num, adv_nums, search_mode):
         full_serach_time += (time.time() - start)
             
         time.sleep(3)
-        contract.create_hash_local_file(user)
-        
         start = time.time()
-        local_hexdigest = contract.compute_local_hash(user, search_category)  
-        local_hash_time += (time.time() - start)
+        contract.search_by_time(user, search_category, start_time)
+        timestamp_search_time += (time.time() - start)
 
     with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
         fp.write("The time cost of search " + str(cate_num) + " categories is: " + str(full_serach_time) + "\n")
-        fp.write("The time cost of local hash computation of " + str(cate_num) + " categories is: " + str(local_hash_time) + "\n")
+        fp.write("The time cost of search " + str(cate_num) + " categories under timestamp condition is: " + str(timestamp_search_time) + "\n")
             
 if __name__ == "__main__":
     """
@@ -101,8 +99,10 @@ if __name__ == "__main__":
     cate_num = 2
     adv_nums = [1, 2]
     search_mode = True
+    start_time = datetime.datetime(2021,4,25,16,25,0,0,tzinfo=datetime.timezone.utc)
     assert(type(cate_num) is int)
     assert(type(adv_nums) is list)
     assert(len(adv_nums) == cate_num)
     assert(type(search_mode) is bool)
-    test_main(cate_num, adv_nums, search_mode)
+    assert(type(start_time) is datetime.datetime)
+    test_main(cate_num, adv_nums, search_mode, start_time)

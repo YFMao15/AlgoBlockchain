@@ -7,20 +7,8 @@ from User import *
 from Advertiser import *
 from Contract import *
 
-def test_main(cate_num, adv_num, key, search_mode):
-    if int(key) == 1:
-        API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC"
-    elif int(key) == 2:
-        API_key = "7iNfo9pqXu4TbDwzzR6oB6yqcnxcpLwm36HdRHTu"
-    elif int(key) == 3:
-        API_key = "CdYVr07ErYa3VNessIks1aPcmlRYPjfZ34KYF7TF"
-    elif int(key) == 4:
-        API_key = "bm7hPLk9qh3E0paWuID732svReMjXUl7R2cUEAfb"
-    elif int(key) == 5:
-        API_key = "yyQ3OgPjfH8596UMflj213aSXUPeZU9N5Bhpa6OL"
-    elif int(key) == 6:
-        API_key = "3gy4jhdT5R3HT29Ok4YuXaRCocW3Y8HOaQbpvOJ4"
-
+def test_main(cate_num, adv_num, key, search_mode, start_time):
+    API_key = "CdYVr07ErYa3VNessIks1aPcmlRYPjfZ34KYF7TF"
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     index_address = "https://testnet-algorand.api.purestake.io/idx2"
 
@@ -43,7 +31,7 @@ def test_main(cate_num, adv_num, key, search_mode):
     banker.login()
 
     full_serach_time = 0.
-    local_hash_time = 0.
+    timestamp_search_time = 0.
     opt_in_time = 0.
     update_time = 0.
     close_out_time = 0.
@@ -88,27 +76,25 @@ def test_main(cate_num, adv_num, key, search_mode):
             contract.clear_app(adv)
             close_out_time += (time.time() - start)
             
+        print("Testing searching capability of smart contract of " + str(cate_num) + " categories...\n")
         # search & online hash testing
-        print("Testing searching capability of smart contract...\n")
-        time.sleep(3)
         search_category = "Category1"
+        time.sleep(3)
         start = time.time()
         contract.full_search(user, search_category)
         full_serach_time += (time.time() - start)
-            
-        time.sleep(3)
-        contract.create_hash_local_file(user)
-        
-        start = time.time()
-        local_hexdigest = contract.compute_local_hash(user, search_category)  
-        local_hash_time += (time.time() - start)
 
+        time.sleep(3)
+        start = time.time()
+        contract.search_by_time(user, search_category, start_time)
+        timestamp_search_time += (time.time() - start)
+            
     with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
         fp.write("The time cost of opting in one advertiser is: " + str(opt_in_time) + "\n")
         fp.write("The time cost of updating one advertiser is: " + str(update_time) + "\n")
         fp.write("The time cost of closing out one advertiser is: " + str(close_out_time) + "\n")
         fp.write("The time cost of search " + str(cate_num) + " categories is: " + str(full_serach_time) + "\n")
-        fp.write("The time cost of local hash computation of " + str(cate_num) + " categories is: " + str(local_hash_time) + "\n")
+        fp.write("The time cost of search " + str(cate_num) + " categories under timestamp condition is: " + str(timestamp_search_time) + "\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Running the round testing of blockchain in cmd mode.')
@@ -122,6 +108,9 @@ if __name__ == "__main__":
         help='The testing rounds of the same experiment')
     parser.add_argument('-s', '--search_mode', type=str2bool,
         help='Only the searching experiments will be conducted')
+    parser.add_argument('-t', '--time-input', type=int, nargs='+',
+        help='The timestamp for searching the smart contract under the condition of starting time, format YYYY MM DD hh mm ss')
+
 
     args = parser.parse_args(sys.argv[1:])
     adv_num = args.adv_num
@@ -129,6 +118,7 @@ if __name__ == "__main__":
     key = args.key
     round_num = args.round_num
     search_mode = args.search_mode
+    time_input = args.time_input
 
     assert(type(cate_num) is int)
     assert(type(adv_num) is int)
@@ -136,7 +126,10 @@ if __name__ == "__main__":
     assert((key >= 1) and (key <= 6))
     assert(type(round_num) is int)
     assert(type(search_mode) is bool)
+    assert(len(time_input) == 6)
+    start_time = datetime.datetime(time_input[0], time_input[1], time_input[2], time_input[3], time_input[4], time_input[5], 0, tzinfo=datetime.timezone.utc)
+    assert(type(start_time) is datetime.datetime)
 
     for _ in range(round_num):
-        test_main(cate_num, adv_num, key, search_mode)
+        test_main(cate_num, adv_num, key, search_mode, start_time)
         time.sleep(5)

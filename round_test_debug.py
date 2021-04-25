@@ -6,15 +6,15 @@ from User import *
 from Advertiser import *
 from Contract import *
 
-def test_main(cate_num, adv_num, search_mode):
+def test_main(cate_num, adv_num, search_mode, start_time):
     API_key = "CdYVr07ErYa3VNessIks1aPcmlRYPjfZ34KYF7TF"
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     index_address = "https://testnet-algorand.api.purestake.io/idx2"
+    # algod_address = "https://testnet.algoexplorerapi.io/"
+    # index_address = "https://tetnet.algoexplorerapi.io/idx2"
 
     if os.path.exists(os.path.join(os.path.dirname(__file__), "debug.log")):
         os.remove(os.path.join(os.path.dirname(__file__), "debug.log"))
-    if os.path.exists(os.path.join(os.path.dirname(__file__), "verify.log")):
-        os.remove(os.path.join(os.path.dirname(__file__), "verify.log"))
     if os.path.exists(os.path.join(os.path.dirname(__file__), "search.log")):
         os.remove(os.path.join(os.path.dirname(__file__), "search.log"))
 
@@ -76,7 +76,7 @@ def test_main(cate_num, adv_num, search_mode):
     time.sleep(5)
     print("Testing searching capability of smart contract of " + str(cate_num) + " categories...\n")
     full_serach_time = 0.
-    local_hash_time = 0.
+    timestamp_search_time = 0.
 
     for idx in range(1, cate_num + 1):
         search_category = "Category" + str(idx)
@@ -84,25 +84,29 @@ def test_main(cate_num, adv_num, search_mode):
         contract.full_search(user, search_category)
         full_serach_time += (time.time() - start)
         time.sleep(3)
-
-        contract.create_hash_local_file(user)
+    
+    os.remove(os.path.join(os.path.dirname(__file__), contract.search_file))
+    for idx in range(1, cate_num + 1):
+        search_category = "Category" + str(idx)
         start = time.time()
-        local_hexdigest = contract.compute_local_hash(user, search_category)  
-        local_hash_time += (time.time() - start)
+        contract.search_by_time(user, search_category, start_time)
+        timestamp_search_time += (time.time() - start)
         time.sleep(3)
 
     with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
         fp.write("The time cost of search " + str(cate_num) + " categories is: " + str(full_serach_time) + "\n")
-        fp.write("The time cost of local hash computation of " + str(cate_num) + " categories is: " + str(local_hash_time) + "\n")            
+        fp.write("The time cost of search " + str(cate_num) + " categories under timestamp condition is: " + str(timestamp_search_time) + "\n")
 
 if __name__ == "__main__":
     """
     CHANGE PARAMS HERE TO LAUNCH DIFFERENT MODE
     """
     cate_num = 1
-    adv_num = 1000
+    adv_num = 5
     search_mode = True
+    start_time = datetime.datetime(2021,4,25,16,25,0,0,tzinfo=datetime.timezone.utc)
     assert(type(cate_num) is int)
     assert(type(adv_num) is int)
     assert(type(search_mode) is bool)
-    test_main(cate_num, adv_num, search_mode)
+    assert(type(start_time) is datetime.datetime)
+    test_main(cate_num, adv_num, search_mode, start_time)

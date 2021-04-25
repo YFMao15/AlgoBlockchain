@@ -7,7 +7,7 @@ from User import *
 from Advertiser import *
 from Contract import *
 
-def test_main(cate_num, adv_nums, key, search_mode):
+def test_main(cate_num, adv_nums, key, search_mode, start_time):
     API_key = "CdYVr07ErYa3VNessIks1aPcmlRYPjfZ34KYF7TF"
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     index_address = "https://testnet-algorand.api.purestake.io/idx2"
@@ -76,7 +76,7 @@ def test_main(cate_num, adv_nums, key, search_mode):
     time.sleep(5)
     print("Testing searching capability of smart contract of " + str(cate_num) + " categories...\n")
     full_serach_time = 0.
-    local_hash_time = 0.
+    timestamp_search_time = 0.
 
     for idx in range(1, cate_num + 1):
         search_category = "Category" + str(idx)
@@ -85,15 +85,14 @@ def test_main(cate_num, adv_nums, key, search_mode):
         full_serach_time += (time.time() - start)
             
         time.sleep(3)
-        contract.create_hash_local_file(user)
-        
         start = time.time()
-        local_hexdigest = contract.compute_local_hash(user, search_category)  
-        local_hash_time += (time.time() - start)
+        contract.search_by_time(user, search_category, start_time)
+        timestamp_search_time += (time.time() - start)
 
     with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
         fp.write("The time cost of search " + str(cate_num) + " categories is: " + str(full_serach_time) + "\n")
-        fp.write("The time cost of local hash computation of " + str(cate_num) + " categories is: " + str(local_hash_time) + "\n")
+        fp.write("The time cost of search " + str(cate_num) + " categories under timestamp condition is: " + str(timestamp_search_time) + "\n")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Running the imbalanced testing of blockchain in cmd mode.')
@@ -107,6 +106,9 @@ if __name__ == "__main__":
         help='The testing rounds of the same experiment')
     parser.add_argument('-s', '--search-mode', type=str2bool,
         help='Only the searching experiments will be conducted')
+    parser.add_argument('-t', '--time-input', type=int, nargs='+',
+        help='The timestamp for searching the smart contract under the condition of starting time, format YYYY MM DD hh mm ss')
+
 
     args = parser.parse_args(sys.argv[1:])
     cate_num = args.cate_num
@@ -114,6 +116,7 @@ if __name__ == "__main__":
     key = args.key
     round_num = args.round_num
     search_mode = args.search_mode
+    time_input = args.time_input
 
     assert(type(cate_num) is int)
     assert(type(adv_nums) is list)
@@ -122,7 +125,10 @@ if __name__ == "__main__":
     assert((key >= 1) and (key <= 6))
     assert(type(round_num) is int)
     assert(type(search_mode) is bool)
+    assert(len(time_input) == 6)
+    start_time = datetime.datetime(time_input[0], time_input[1], time_input[2], time_input[3], time_input[4], time_input[5], 0, tzinfo=datetime.timezone.utc)
+    assert(type(start_time) is datetime.datetime)
 
     for _ in range(round_num):
-        test_main(cate_num, adv_nums, key, search_mode)
+        test_main(cate_num, adv_nums, key, search_mode, start_time)
         time.sleep(5)

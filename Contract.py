@@ -4,9 +4,9 @@ import json
 import time
 import base64
 import string
+import datetime
 import numpy as np
 from pyteal import *
-from blake3 import blake3
 from algosdk import mnemonic
 from algosdk.v2client import algod, indexer
 from algosdk.future import transaction
@@ -49,13 +49,19 @@ class Contract():
             self.API_key, 
             self.index_address, 
             headers=purestake_token)
+        # algoexplorer_token = {}
+        # self.contract_client =  algod.AlgodClient(
+        #     self.API_key, 
+        #     self.algod_address, 
+        #     headers=algoexplorer_token)
+        # self.indexer_client = indexer.IndexerClient(
+        #     self.API_key, 
+        #     self.index_address, 
+        #     headers=algoexplorer_token)
 
         self.log_file = "debug.log"
         self.search_file = "search.log"
-        self.verify_file = "verify.log"
         self.directory = os.path.dirname(__file__)
-        self.hash_vector_size = 1024
-        self.hash_element_bits = 16
 
     def create_code(self):
         create_content = Seq([
@@ -170,17 +176,15 @@ class Contract():
         self.TEAL_clear_condition = program
 
     def compile_code(self):
-        code = compileTeal(self.TEAL_approve_condition, Mode.Application)
-        self.TEAL_approve_code = code
+        self.TEAL_approve_code = compileTeal(self.TEAL_approve_condition, Mode.Application)
         self.TEAL_approve_program = base64.b64decode(self.contract_client.compile(self.TEAL_approve_code)['result'])
         with open(os.path.join(self.directory, 'content_approval.teal'), 'w') as f:
-            f.write(code)
+            f.write(self.TEAL_approve_code)
 
-        code = compileTeal(self.TEAL_clear_condition, Mode.Application)
-        self.TEAL_clear_code = code
+        self.TEAL_clear_code = compileTeal(self.TEAL_clear_condition, Mode.Application)
         self.TEAL_clear_program = base64.b64decode(self.contract_client.compile(self.TEAL_clear_code)['result'])
         with open(os.path.join(self.directory,'content_clear_state.teal'), 'w') as f:
-            f.write(code)
+            f.write(self.TEAL_clear_code)
 
     def wait_for_confirmation(self, txid):
         last_round = self.contract_client.status().get('last-round')
@@ -461,94 +465,54 @@ class Contract():
         assert(type(app_id) is int)
         assert(matched is True)
 
-        opted_in_accounts = user.indexer_client.accounts(limit=10000, application_id = app_id)['accounts']
-        results = []
-        for account in opted_in_accounts:
-            if 'apps-local-state' not in account:
-                continue
-            if 'key-value' not in account['apps-local-state'][0]:
-                continue
-            local_states = account['apps-local-state'][0]['key-value']
-            for state in local_states:
-                title = base64.b64decode(state['key']).decode("utf-8")
-                if title == "Index":
-                    results.append(title + " : " + str(state['value']['uint']))
-                else:
-                    results.append(title + " : " + base64.b64decode(state['value']['bytes']).decode("utf-8"))
+        txns_dict = {}
+        txns = self.indexer_client.search_transactions(application_id=app_id)['transactions']
+        for txn in txns:
+            txn_args = txn['application-transaction']['application-args']
+            txn_plain_args = []
+            for txn_arg in txn_args:
+                txn_plain_args.append(base64.b64decode(txn_arg))
+            # txn['round-time'] assumes the time zone as UTC+0 by default
+            txns_dict[txn['round-time']] = txn_args
         
         with open(os.path.join(self.directory, self.search_file), "a+") as fp:
-            for result in results:
-                fp.write(str(result))
-                fp.write("\n")
+            fp.write(json.dumps(txns_dict))
+        
+    def search_by_time(self, user, input_category, timestamp):
+        if input_category not in self.categories:
+            sys.exit("Wrong search input!")
 
-    def create_hash_local_file(self, user):
-        if os.path.exists(os.path.join(self.directory, self.verify_file)):
-            os.remove(os.path.join(self.directory, self.verify_file))
-
-        all_app_results = {}
         apps = user.algod_client.account_info(self.account_public_key)['created-apps']
-        apps_info = []
+        app_id = None
+        matched = False
         for app in apps:
             if 'application' in app:
                 global_states = app['application']['params']['global-state']
             else:
                 global_states = app['params']['global-state']
+
             for state in global_states:
                 if base64.b64decode(state['key']).decode("utf-8") == "Category":
-                    apps_info.append((app['id'], base64.b64decode(state['value']['bytes']).decode("utf-8")))
-            
-        for app_info in apps_info:
-            opted_in_accounts = user.indexer_client.accounts(limit=10000, application_id = app_info[0])['accounts']
-            results = []
-            for account in opted_in_accounts:
-                if 'apps-local-state' not in account:
-                    continue
-                if 'key-value' not in account['apps-local-state'][0]:
-                    continue
-                local_states = account['apps-local-state'][0]['key-value']
-                index = None
-                content = []
-                for state in local_states:
-                    if base64.b64decode(state['key']).decode("utf-8") == "Index":
-                        index = state['value']['uint']
-                    else:
-                        key_order = int(base64.b64decode(state['key']).decode("utf-8")[5:])
-                        content.append((key_order, base64.b64decode(state['value']['bytes']).decode("utf-8")))
-                assert(type(index) is int)
-                assert(len(content) == 15)
-                output  = ""
-                for share in sorted(content, key=lambda x:x[0]):
-                    output += share[1]
-                results.append((index, output))
+                    if base64.b64decode(state['value']['bytes']).decode("utf-8") == input_category:
+                        matched = True
+                        app_id = int(app['id'])
+                        break
+            if matched is True:
+                break
+        assert(type(app_id) is int)
+        assert(matched is True)
 
-            app_results = [{x[0]: x[1]} for x in sorted(results, key= lambda x: x[0])]
-            all_app_results[app_info[1]] = app_results
-            time.sleep(3)
-
-        with open(os.path.join(self.directory, self.verify_file), "a+") as fp:
-            fp.write(json.dumps(all_app_results))
-
-    def lattice_hash(self, content):
-        index = list(content.keys())[0]
-        shares = list(content.values())[0]
-        local_hash = blake3(bytes(str(index) + shares,'utf-8'))
-        digest = local_hash.digest(length=self.hash_vector_size * self.hash_element_bits // 8)
-        return np.frombuffer(digest, dtype=np.uint16, count=self.hash_vector_size)
-
-    def compute_local_hash(self, user, input_category):
-        if input_category not in self.categories:
-            sys.exit("Wrong search input!")
-        with open(os.path.join(self.directory, self.verify_file), "r") as fp:
-            contents = json.loads(fp.readline())[input_category]
-
-        digests = []
-        for content in contents:
-            digests.append(self.lattice_hash(content))
-        total_digest = np.zeros(self.hash_vector_size).astype(int)
-        for digest in digests:
-            total_digest += digest
-        total_digest = np.mod(total_digest, 2**16)
-        assert(len(total_digest) == self.hash_vector_size)
-
-        return total_digest
+        assert(type(timestamp) is datetime.datetime)
+        assert(timestamp.tzinfo is datetime.timezone.utc)
+        txns_dict = {}
+        txns = self.indexer_client.search_transactions(application_id=app_id, start_time=timestamp.strftime("%Y-%m-%dT%H:%M:%S.%fZ"))['transactions']
+        for txn in txns:
+            txn_args = txn['application-transaction']['application-args']
+            txn_plain_args = []
+            for txn_arg in txn_args:
+                txn_plain_args.append(base64.b64decode(txn_arg))
+            # txn['round-time'] assumes the time zone as UTC+0 by default
+            txns_dict[txn['round-time']] = txn_args
         
+        with open(os.path.join(self.directory, self.search_file), "a+") as fp:
+            fp.write(json.dumps(txns_dict))
