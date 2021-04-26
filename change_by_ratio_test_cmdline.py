@@ -48,7 +48,7 @@ def test_main(cate_num, adv_num, key, change_ratio, search_mode, start_time):
         # print(content_info)
 
         if not search_mode:
-            for _ in range(int(adv_num * change_ratio)):
+            for x in range(int(adv_num * change_ratio)):
                 # opt-in testing
                 print("Testing opting in advertiser...\n")
                 info = account.generate_account()
@@ -78,6 +78,9 @@ def test_main(cate_num, adv_num, key, change_ratio, search_mode, start_time):
                 start = time.time()
                 contract.clear_app(adv)
                 close_out_time += (time.time() - start)
+
+                if (x + 1) % 5 == 0:
+                    print(str(x + 1) + " / " + str(int(adv_num * change_ratio)) + " advertisers finished testing\n")
             
         print("Testing searching capability of smart contract of " + str(cate_num) + " categories...\n")
         # search & online hash testing
