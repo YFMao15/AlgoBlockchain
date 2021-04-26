@@ -54,7 +54,6 @@ def test_main(cate_num, adv_nums, search_mode, start_time):
         contract.opt_in_app(adv) 
         with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
             fp.write("The time cost of opting in one advertiser is: " + str(time.time() - start) + "\n")
-        time.sleep(5)
 
         # update testing
         print("Testing updating advertiser...\n")

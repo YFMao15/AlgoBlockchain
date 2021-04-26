@@ -59,10 +59,10 @@ def test_main(cate_num, adv_num, key, change_ratio, search_mode, start_time):
                 adv.assign_category(input_categories)
                 adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
                 send_money(banker, adv, 11000000)
+                time.sleep(5)
                 start = time.time()
                 contract.opt_in_app(adv) 
                 opt_in_time += (time.time() - start)
-                time.sleep(5)
                 
                 # update testing
                 print("Testing updating advertiser...\n")

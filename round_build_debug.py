@@ -7,7 +7,7 @@ from Advertiser import *
 from Contract import *
 
 def build_main(init, cate_num, adv_num):
-    API_key = "CdYVr07ErYa3VNessIks1aPcmlRYPjfZ34KYF7TF"
+    API_key = "3gy4jhdT5R3HT29Ok4YuXaRCocW3Y8HOaQbpvOJ4"
     algod_address = "https://testnet-algorand.api.purestake.io/ps2"
     index_address = "https://testnet-algorand.api.purestake.io/idx2"
 
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     """
     init = True
     cate_num = 1
-    adv_num = 5
+    adv_num = 10
     assert(type(init) is bool)
     assert(type(cate_num) is int)
     assert(type(adv_num) is int)

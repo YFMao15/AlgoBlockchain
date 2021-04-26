@@ -23,7 +23,7 @@ def build_main(init, cate_num, adv_nums):
     user.login()
 
     banker = Advertiser(
-        API_key = "afETOBfGPz3JfzIY3B1VG48kIGsMrlxO67VdEeOC",
+        API_key = "3gy4jhdT5R3HT29Ok4YuXaRCocW3Y8HOaQbpvOJ4",
         algod_address = algod_address,
         index_address = index_address,
         passphrase = "code thrive mouse code badge example pride stereo sell viable adjust planet text close erupt embrace nature upon february weekend humble surprise shrug absorb faint")

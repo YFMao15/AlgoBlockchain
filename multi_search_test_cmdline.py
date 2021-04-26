@@ -61,7 +61,6 @@ def test_main(cate_num, adv_num, key, search_mode, start_time):
             start = time.time()
             contract.opt_in_app(adv) 
             opt_in_time += (time.time() - start)
-            time.sleep(5)
             
             # update testing
             print("Testing updating advertiser...\n")
