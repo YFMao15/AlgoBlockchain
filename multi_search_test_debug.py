@@ -57,11 +57,13 @@ def test_main(cate_num, adv_num, search_mode, start_time):
             adv.assign_category(input_categories)
             adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
             send_money(banker, adv, 11000000)
+            time.sleep(3)
             start = time.time()
             contract.opt_in_app(adv) 
             opt_in_time += (time.time() - start)
             
             # update testing
+            time.sleep(3)
             print("Testing updating advertiser...\n")
             adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
             start = time.time()
@@ -69,6 +71,7 @@ def test_main(cate_num, adv_num, search_mode, start_time):
             update_time += (time.time() - start)
 
             # close out testing
+            time.sleep(3)
             print("Testing closing out advertiser...\n")
             start = time.time()
             contract.clear_app(adv)

@@ -52,11 +52,14 @@ def test_main(cate_num, adv_num, search_mode, start_time):
             adv.assign_category(input_categories)
         adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
         send_money(banker, adv, 11000000)
+        time.sleep(3)
         start = time.time()
         contract.opt_in_app(adv) 
         with open(os.path.join(contract.directory, contract.log_file), "a+") as fp:
             fp.write("The time cost of opting in one advertiser is: " + str(time.time() - start) + "\n")
         
+        # update testing
+        time.sleep(3)
         print("Testing updating advertiser...\n")
         adv.content = bytes(''.join(random.choices(string.ascii_uppercase + string.digits, k=960)), 'utf-8')
         start = time.time()
@@ -65,6 +68,7 @@ def test_main(cate_num, adv_num, search_mode, start_time):
             fp.write("The time cost of updating one advertiser is: " + str(time.time() - start) + "\n")
 
         # close out testing
+        time.sleep(3)
         print("Testing closing out advertiser...\n")
         start = time.time()
         contract.clear_app(adv)
