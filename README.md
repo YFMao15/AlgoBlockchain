@@ -1,6 +1,11 @@
-This is the repo to build & test smart contract for Algorand.
+**This is the repo to build & test smart contract for Algorand.**
 
-Code structure:
+**WARNING:**
+
+This is an academic proof-of-concept prototype, and in particular has not received careful code review. 
+This implementation is NOT ready for production use.
+
+**Code structure:**
 
 Contract.py, Advertiser.py, User.py, Utils.py -> main code designing smart contract app
 
@@ -10,14 +15,14 @@ xxxx_test_debug.py -> code to test the functionality of the smart contract using
 xxxx_build_cmdline.py -> code to build the smart contract on blockchain using terminal
 xxxx_test_cmdline.py -> code to test the functionality of the smart contract using terminal
 
-Building & testing scenarios:
+**Building & testing scenarios:**
 
 round -> single or multiple contracts with same number of accounts opted-in
 imbalance -> multiple contracts with different number of acconts opted-in
 multi_search -> multiple contracts accounts integrated for one test
 change_by_ratio -> single or multiple contracts testing with different percentage of accounts whose local storage changed
 
-Command line arguments:
+**Command line arguments:**
 
 xxxx_build_cmdline:
 -i: true or false. If true then creating a new account, if false then continue building the account earlier.
@@ -34,7 +39,7 @@ xxxx_test_cmdline.py:
 -p: float, 0<= p <= 1. The percentage of accounts with local storage changed.
 -t: time stamp like strings. E.g. 2021 5 7 12 0 0. The time stamp which marks the starting time of returning results.
 
-Outputs:
+**Outputs:**
 
 account_xxxx.txt: The private key of smart contract accounts.
 debug.log: The log of minor processes.
